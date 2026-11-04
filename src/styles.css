@@ -459,7 +459,7 @@ h2 {
 }
 
 .project-num {
-    font: 800 15px/1 "DM Mono", monospace;
+    font: 800 23px/1 "DM Mono", monospace;
     letter-spacing: 1.2px;
 }
 
@@ -3672,11 +3672,11 @@ body,
     }
 
     .project-num-badge {
-        font-size: 16px;
+        font-size: 24px;
     }
 
     .project-num {
-        font: 800 16px/1 "DM Mono", monospace;
+        font: 800 24px/1 "DM Mono", monospace;
         letter-spacing: 1.5px;
     }
 
