@@ -10,9 +10,11 @@ export function getLenis() {
   return globalLenis;
 }
 
-export function scrollToSection(selector) {
+export function scrollToSection(selector, options = {}) {
   if (globalLenis) {
-    globalLenis.scrollTo(selector, { offset: -75, duration: 1.2 });
+    const offset = options.offset !== undefined ? options.offset : 0;
+    const duration = options.duration !== undefined ? options.duration : 1.2;
+    globalLenis.scrollTo(selector, { offset, duration });
   } else {
     const el = document.querySelector(selector);
     el?.scrollIntoView({ behavior: "smooth" });
@@ -65,7 +67,8 @@ export default function SmoothScroll() {
       if (href && href !== "#") {
         e.preventDefault();
         sfx.playPop();
-        lenis.scrollTo(href, { offset: -75, duration: 1.2 });
+        const customOffset = anchor.dataset.offset !== undefined ? parseInt(anchor.dataset.offset, 10) : 0;
+        lenis.scrollTo(href, { offset: customOffset, duration: 1.2 });
       }
     };
 

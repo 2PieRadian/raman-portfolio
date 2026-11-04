@@ -148,7 +148,7 @@ button {
 .hero-inner {
     max-width: 1440px;
     margin: auto;
-    padding: 24px 7% 16px;
+    padding: 44px 7% 36px;
     position: relative;
     z-index: 2
 }
@@ -452,9 +452,21 @@ h2 {
 .project-top {
     display: flex;
     justify-content: space-between;
+    align-items: center;
     gap: 12px;
-    font: 500 9px "DM Mono";
+    font: 500 10px "DM Mono", monospace;
     letter-spacing: 1.2px
+}
+
+.project-num {
+    font: 800 15px/1 "DM Mono", monospace;
+    letter-spacing: 1.2px;
+}
+
+.project-build-label {
+    font: 600 10px "DM Mono", monospace;
+    letter-spacing: 1.2px;
+    opacity: .85;
 }
 
 .project-type {
@@ -1057,7 +1069,8 @@ h2 {
     }
 
     .hero-inner {
-        padding-top: 42px
+        padding-top: 62px;
+        padding-bottom: 36px;
     }
 
     .hero-kicker {
@@ -3648,6 +3661,25 @@ body,
         font-size: 10.5px;
     }
 
+    /* Proof of Work: Only show numberings on mobile screens */
+    .project-build-label,
+    .project-type {
+        display: none !important;
+    }
+
+    .project-top {
+        justify-content: flex-start;
+    }
+
+    .project-num-badge {
+        font-size: 16px;
+    }
+
+    .project-num {
+        font: 800 16px/1 "DM Mono", monospace;
+        letter-spacing: 1.5px;
+    }
+
     /* Command Palette: Mobile dialog */
     .awwwards-cmd-backdrop {
         padding-top: 36px;
@@ -3696,10 +3728,10 @@ body,
         gap: 16px;
     }
 
-    /* Hide hero kicker, availability, live time, and location on mobile screens */
+    /* Hide hero kicker, availability, live time, and index on mobile screens */
     .hero-kicker,
     .hero-live-time-ticker,
-    .hero-index-location {
+    .hero-index {
         display: none !important;
     }
 }
@@ -3714,18 +3746,18 @@ body,
     }
 
     .hero-inner {
-        padding: 16px 5% 12px;
+        padding: 36px 5% 32px;
     }
 
     .hero-kicker,
     .hero-live-time-ticker,
-    .hero-index-location {
+    .hero-index {
         display: none !important;
     }
 
     .hero h1 {
         font-size: clamp(34px, 10.5vw, 54px) !important;
-        margin: 6px 0 10px !important;
+        margin: 14px 0 26px !important;
         line-height: 0.96 !important;
         letter-spacing: -0.065em !important;
     }
@@ -3739,13 +3771,13 @@ body,
     .hero-foot {
         flex-direction: column;
         align-items: flex-start;
-        gap: 10px;
+        gap: 26px;
     }
 
     .hero-foot p {
         width: 100%;
-        font-size: 14.5px;
-        line-height: 1.45;
+        font-size: 15px;
+        line-height: 1.5;
         margin: 0;
     }
 

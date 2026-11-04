@@ -597,7 +597,7 @@ function App() {
                   Explore my work <ArrowDownRight size={19} />
                 </a>
 
-                <div
+                {/* <div
                   className="hero-stamp interactive-stamp"
                   onClick={handleStampClick}
                   data-magnetic
@@ -610,20 +610,12 @@ function App() {
                     <br />A POINT OF VIEW{" "}
                     <Asterisk size={20} className="stamp-star" />
                   </div>
-                </div>
+                </div> */}
               </div>
             </div>
 
             <div className="hero-index">
               <span className="hero-index-location">INDIA · GHAZIABAD</span>
-              <span
-                className="scroll-explore-prompt"
-                onClick={() => scrollToSection("#work")}
-                data-cursor="click"
-              >
-                SCROLL TO EXPLORE ↓
-              </span>
-              <span>01 — 05</span>
             </div>
           </div>
 

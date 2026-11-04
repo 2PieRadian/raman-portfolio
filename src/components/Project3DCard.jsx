@@ -90,7 +90,10 @@ export default function Project3DCard({ project, index }) {
           data-cursor="click"
           data-cursor-text="BURST ✳"
         >
-          {project.number} / SELECTED BUILD <Asterisk size={12} className="spin-hover" />
+          <span className="project-num">{project.number}</span>
+          <span className="project-build-label">
+            {" "}/ SELECTED BUILD <Asterisk size={12} className="spin-hover" />
+          </span>
         </span>
         <span className="project-type">{project.type}</span>
       </div>
