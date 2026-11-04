@@ -540,10 +540,10 @@ function App() {
             <div className="hero-kicker">
               <SectionLabel>A DEVELOPER WHO LIKES THE DETAILS</SectionLabel>
               <div className="hero-kicker-badges">
+                <LiveTimeTicker />
                 <span className="availability">
                   OPEN TO OPPORTUNITIES
                 </span>
-                <LiveTimeTicker />
               </div>
             </div>
 
