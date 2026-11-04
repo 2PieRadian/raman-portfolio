@@ -364,8 +364,8 @@ h2 {
 }
 
 .section-heading>p {
-    font-size: 14px;
-    line-height: 1.6;
+    font-size: 16.5px;
+    line-height: 1.65;
     color: var(--muted);
     margin: 0 0 8px
 }
@@ -443,12 +443,12 @@ h2 {
 }
 
 .project-card p {
-    font-size: 14px;
-    line-height: 1.65;
-    max-width: 570px;
+    font-size: 16.5px;
+    line-height: 1.7;
+    max-width: 620px;
     margin: 0 0 22px;
     color: inherit;
-    opacity: .85
+    opacity: .88
 }
 
 .tags {
@@ -565,20 +565,22 @@ h2 {
 }
 
 .timeline {
-    border-top: 1px solid var(--line)
+    border-top: 1.5px solid var(--line)
 }
 
 .job {
     display: grid;
-    grid-template-columns: 90px 1fr;
-    gap: 30px;
-    padding: 40px 0;
-    border-bottom: 1px solid var(--line)
+    grid-template-columns: 80px 1fr;
+    gap: 32px;
+    padding: 48px 0;
+    border-bottom: 1.5px solid var(--line)
 }
 
 .job-index {
-    font: 500 13px "DM Mono";
-    color: #a17bdd
+    font: 700 15px "DM Mono", monospace;
+    color: #926ec9;
+    letter-spacing: 1px;
+    padding-top: 6px
 }
 
 .job-head {
@@ -589,66 +591,83 @@ h2 {
 }
 
 .job-head h3 {
-    font: 800 28px Manrope;
-    letter-spacing: -1px;
-    margin: 0 0 5px
+    font: 800 32px/1.15 Manrope, sans-serif;
+    letter-spacing: -.04em;
+    margin: 0 0 6px
 }
 
 .job-head h3 a {
     display: flex;
     align-items: center;
-    gap: 7px
+    gap: 8px;
+    color: var(--ink);
+    transition: color .2s ease
 }
 
 .job-head h3 a:hover {
-    color: #8d6cc4
+    color: #794bb7
 }
 
 .job-head p {
     margin: 0;
     color: var(--muted);
-    font-size: 14px
+    font-size: 17px;
+    line-height: 1.6;
+    font-weight: 600
 }
 
 .job-head>span {
-    font: 10px "DM Mono";
-    letter-spacing: 1px;
+    font: 600 11.5px "DM Mono", monospace;
+    letter-spacing: 1.2px;
     white-space: nowrap;
-    padding-top: 9px
+    padding-top: 8px;
+    color: var(--muted)
 }
 
 .job-detail {
-    font-size: 13px;
-    color: #8b8495;
-    margin: 18px 0
+    font-size: 19px;
+    line-height: 1.65;
+    color: var(--ink);
+    opacity: .92;
+    margin: 18px 0 24px;
+    font-weight: 500
 }
 
 .job ul {
-    padding-left: 18px;
+    padding-left: 20px;
     margin: 0;
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 12px 38px
+    gap: 16px 44px
 }
 
 .job li {
-    font-size: 13px;
+    font-size: 16.5px;
     line-height: 1.65;
-    color: #5e5968;
+    color: #3b3548;
     padding-left: 4px
 }
 
 .job li::marker {
-    color: #a17bdd
+    color: #926ec9;
+    font-size: 1.1em
 }
 
 .job li b {
-    color: var(--ink)
+    color: var(--ink);
+    font-weight: 700
 }
 
 .job li a {
-    color: #8b65c3;
-    text-decoration: underline
+    color: #794bb7;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    font-weight: 600;
+    transition: color .2s
+}
+
+.job li a:hover {
+    color: var(--coral)
 }
 
 .toolkit-section {
@@ -658,38 +677,52 @@ h2 {
 .skills-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 18px
+    gap: 20px
 }
 
 .skill-card {
-    min-height: 230px;
+    min-height: 250px;
     border: 1.5px solid var(--ink);
-    border-radius: 16px;
-    padding: 22px;
-    box-shadow: 4px 5px 0 var(--ink)
+    border-radius: 18px;
+    padding: 26px 24px;
+    box-shadow: 4px 5px 0 var(--ink);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: transform .2s ease, box-shadow .2s ease
+}
+
+.skill-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 6px 7px 0 var(--ink)
 }
 
 .skill-top {
     display: flex;
     justify-content: space-between;
-    font: 10px "DM Mono"
+    align-items: center;
+    font: 600 12px "DM Mono", monospace;
+    letter-spacing: 1px
 }
 
 .skill-card h3 {
-    font: 700 19px Manrope;
-    letter-spacing: -.5px;
-    margin: 45px 0 10px
+    font: 800 22px/1.2 Manrope, sans-serif;
+    letter-spacing: -.03em;
+    margin: 28px 0 12px
 }
 
 .skill-card p {
-    font-size: 12px;
-    line-height: 1.65;
+    font-size: 15px;
+    line-height: 1.6;
     margin: 0;
-    opacity: .8
+    color: var(--ink);
+    opacity: .92;
+    font-weight: 500
 }
 
 .skill-card.ink p {
-    color: #d8d2e3
+    color: #e8e3f2;
+    opacity: .95
 }
 
 .credentials {
@@ -1046,6 +1079,11 @@ h2 {
         margin-bottom: 35px
     }
 
+    .section-heading>p {
+        font-size: 15.5px;
+        line-height: 1.6
+    }
+
     .project-grid {
         grid-template-columns: 1fr;
         gap: 22px
@@ -1067,6 +1105,11 @@ h2 {
 
     .project-card h4 {
         font-size: 18px
+    }
+
+    .project-card p {
+        font-size: 15.5px;
+        line-height: 1.65
     }
 
     .project-bottom {
@@ -1099,45 +1142,63 @@ h2 {
     }
 
     .job {
-        grid-template-columns: 35px 1fr;
-        gap: 10px;
-        padding: 30px 0
+        grid-template-columns: 1fr;
+        gap: 12px;
+        padding: 34px 0
     }
 
     .job-head {
         flex-direction: column;
-        gap: 12px
+        gap: 8px
     }
 
     .job-head h3 {
-        font-size: 23px
+        font-size: 25px
+    }
+
+    .job-head p {
+        font-size: 16px
     }
 
     .job-head>span {
-        padding: 0
+        padding: 0;
+        font-size: 11px
+    }
+
+    .job-detail {
+        font-size: 17px;
+        line-height: 1.6;
+        margin: 12px 0 16px
     }
 
     .job ul {
-        gap: 10px
+        gap: 12px;
+        padding-left: 18px
+    }
+
+    .job li {
+        font-size: 15.5px;
+        line-height: 1.6
     }
 
     .skills-grid {
-        grid-template-columns: 1fr 1fr;
-        gap: 12px
+        grid-template-columns: 1fr;
+        gap: 16px
     }
 
     .skill-card {
-        padding: 16px;
-        min-height: 230px
+        padding: 22px;
+        min-height: auto
     }
 
     .skill-card h3 {
-        font-size: 16px;
-        margin-top: 36px
+        font-size: 20px;
+        margin: 22px 0 10px
     }
 
     .skill-card p {
-        font-size: 11px
+        font-size: 14.5px;
+        line-height: 1.6
     }
 
     .education-card {
@@ -1301,7 +1362,7 @@ h2 {
     padding: 8px 14px 8px 10px;
     box-shadow: 4px 5px 0 var(--ink);
     cursor: pointer;
-    transition: transform .25s cubic-bezier(.2,.8,.2,1), box-shadow .25s ease;
+    transition: transform .25s cubic-bezier(.2, .8, .2, 1), box-shadow .25s ease;
     user-select: none;
     -webkit-user-select: none;
 }
@@ -1563,6 +1624,7 @@ h2 {
         opacity: 0;
         transform: translateY(20px) scale(.96);
     }
+
     to {
         opacity: 1;
         transform: translateY(0) scale(1);
@@ -1701,7 +1763,7 @@ h2 {
     height: 106px;
     border-radius: 50%;
     z-index: 2;
-    transition: transform .4s cubic-bezier(.2,.8,.2,1);
+    transition: transform .4s cubic-bezier(.2, .8, .2, 1);
     transform: translateX(12px);
 }
 
@@ -1713,13 +1775,11 @@ h2 {
     width: 100%;
     height: 100%;
     border-radius: 50%;
-    background: repeating-radial-gradient(
-        circle,
-        #15121b 0px,
-        #15121b 2px,
-        #2a2337 3px,
-        #15121b 4px
-    );
+    background: repeating-radial-gradient(circle,
+            #15121b 0px,
+            #15121b 2px,
+            #2a2337 3px,
+            #15121b 4px);
     border: 1.5px solid var(--ink);
     position: relative;
     display: flex;
@@ -1732,15 +1792,13 @@ h2 {
     position: absolute;
     inset: 0;
     border-radius: 50%;
-    background: conic-gradient(
-        from 30deg,
-        transparent 0deg,
-        rgba(255, 255, 255, .2) 20deg,
-        transparent 45deg,
-        transparent 180deg,
-        rgba(255, 255, 255, .15) 200deg,
-        transparent 230deg
-    );
+    background: conic-gradient(from 30deg,
+            transparent 0deg,
+            rgba(255, 255, 255, .2) 20deg,
+            transparent 45deg,
+            transparent 180deg,
+            rgba(255, 255, 255, .15) 200deg,
+            transparent 230deg);
     pointer-events: none;
 }
 
@@ -2092,6 +2150,7 @@ h2 {
         opacity: 0;
         transform: translateY(-8px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -2190,6 +2249,7 @@ h2 {
     from {
         transform: rotate(0deg);
     }
+
     to {
         transform: rotate(360deg);
     }
@@ -2199,6 +2259,7 @@ h2 {
     from {
         height: 3px;
     }
+
     to {
         height: 12px;
     }
@@ -2208,9 +2269,11 @@ h2 {
     0% {
         height: 3px;
     }
+
     50% {
         height: 15px;
     }
+
     100% {
         height: 6px;
     }
@@ -2220,19 +2283,24 @@ h2 {
     0% {
         height: 4px;
     }
+
     50% {
         height: 18px;
     }
+
     100% {
         height: 8px;
     }
 }
 
 @keyframes live-pulse {
-    0%, 100% {
+
+    0%,
+    100% {
         transform: scale(1);
         opacity: 1;
     }
+
     50% {
         transform: scale(1.35);
         opacity: .7;
