@@ -148,7 +148,7 @@ const experience = [
   {
     company: "Wash and Wow",
     role: "Freelance Full-Stack Developer",
-    date: "FEB 2026 — PRESENT",
+    date: "APRIL 2026 — MAY 2026",
     href: links.wash,
     detail: "Production mobile app and distributed service architecture.",
     points: [
@@ -196,7 +196,7 @@ const experience = [
   {
     company: "MindCurePath Consultancy Pvt. Ltd.",
     role: "Freelance Full-Stack Software Developer",
-    date: "DEC 2025 — FEB 2026",
+    date: "DEC 2025 — MARCH 2026",
     href: links.mind,
     detail: "A live tele-counselling product serving real users.",
     points: [
@@ -470,7 +470,7 @@ function App() {
               <SectionLabel>A DEVELOPER WHO LIKES THE DETAILS</SectionLabel>
               <div className="hero-kicker-badges">
                 <span className="availability">
-                  <i /> OPEN TO OPPORTUNITIES
+                  OPEN TO OPPORTUNITIES
                 </span>
                 <LiveTimeTicker />
               </div>
@@ -490,7 +490,7 @@ function App() {
               <br />
               <span className="kinetic-line">
                 <span className="outlined-word kinetic-word">work.</span>
-                <span
+                {/* <span
                   className="hero-star"
                   onClick={(e) => {
                     const rect = e.currentTarget.getBoundingClientRect();
@@ -505,7 +505,7 @@ function App() {
                   data-cursor-text="BURST ✳"
                 >
                   ✳
-                </span>
+                </span> */}
               </span>
             </h1>
 

@@ -367,7 +367,6 @@ export default function MusicPlayer({ isDeckOpen, setIsDeckOpen, onPlayingStateC
             <div className="mini-info">
               <div className="mini-title-row">
                 <span className="mini-live-badge">
-                  <span className={`live-dot ${isPlaying ? "active" : ""}`} />
                   {isPlaying ? "PLAYING" : "SOUNDTRACK"}
                 </span>
                 <span className="mini-count">0{currentIndex + 1} / 0{tracks.length}</span>

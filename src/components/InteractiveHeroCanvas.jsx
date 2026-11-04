@@ -51,7 +51,6 @@ export function LiveTimeTicker() {
 
   return (
     <div className="hero-live-time-ticker">
-      <span className="live-pulse-dot" />
       <span className="live-time-label">GHAZIABAD, IN</span>
       <span className="live-time-sep">/</span>
       <span className="live-time-val">{istTime || "LIVE"}</span>
