@@ -1,5 +1,5 @@
 import React, { useState, useRef } from "react";
-import { ArrowUpRight, Asterisk, ChevronDown, ChevronUp, Cpu, Layers, ShieldCheck, Zap } from "lucide-react";
+import { ArrowUpRight, Asterisk, ChevronDown, ChevronUp, Cpu } from "lucide-react";
 import { fireAwwwardsConfetti } from "./InteractiveHeroCanvas";
 import { sfx } from "../utils/sfx";
 
@@ -127,7 +127,7 @@ export default function Project3DCard({ project, index }) {
               <ul className="blueprint-list">
                 {project.blueprints.map((item, bIdx) => (
                   <li key={bIdx}>
-                    <Zap size={13} className="bp-icon" />
+                    <span className="bp-num">0{bIdx + 1}</span>
                     <span>{item}</span>
                   </li>
                 ))}
@@ -144,7 +144,6 @@ export default function Project3DCard({ project, index }) {
             key={t}
             className="stack-tag"
             onMouseEnter={() => sfx.playPop()}
-            data-cursor="hover"
           >
             {t}
           </span>

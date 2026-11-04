@@ -24,7 +24,7 @@ export default function SkillsInteractiveFilter({ skillGroups }) {
     setActiveCategory(id);
     try {
       e.currentTarget.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
-    } catch (_) {}
+    } catch (_) { }
   };
 
   return (
@@ -47,7 +47,7 @@ export default function SkillsInteractiveFilter({ skillGroups }) {
 
       {/* Filtered Grid of Skills */}
       <div className="skills-grid">
-        {filteredGroups.map((g, i) => {
+        {filteredGroups.map((g) => {
           const Icon = g.icon;
           const itemsList = g.items.split(", ");
           return (
@@ -55,12 +55,10 @@ export default function SkillsInteractiveFilter({ skillGroups }) {
               className={`skill-card ${g.color} awwwards-skill-card`}
               key={g.title}
               onMouseEnter={() => sfx.playPop()}
-              data-cursor="hover"
             >
               <div className="skill-top">
-                <span className="skill-index">0{i + 1}</span>
                 <div className="skill-icon-bubble">
-                  <Icon size={22} />
+                  <Icon size={22} color="var(--ink)" />
                 </div>
               </div>
 

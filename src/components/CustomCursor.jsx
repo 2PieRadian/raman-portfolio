@@ -34,7 +34,11 @@ export default function CustomCursor() {
 
         if (customCursor) {
           setCursorType(customCursor);
-          setCursorText(customText || customCursor.toUpperCase());
+          if (customText && customText.trim().toUpperCase() !== "HOVER") {
+            setCursorText(customText);
+          } else {
+            setCursorText("");
+          }
         } else if (target.classList.contains("project-card") || target.closest(".project-card")) {
           setCursorType("project");
           setCursorText("VIEW");

@@ -71,8 +71,59 @@ export default function MusicPlayer({ isDeckOpen, setIsDeckOpen, onPlayingStateC
 
   const audioRef = useRef(null);
   const fileInputRef = useRef(null);
+  const dockRef = useRef(null);
   const isTransitioningRef = useRef(false);
   const currentTrack = tracks[currentIndex] || tracks[0];
+
+  // Prevent background page from scrolling when hovering & scrolling over the opened music deck
+  useEffect(() => {
+    if (!isDeckOpen) return;
+
+    const dockEl = dockRef.current;
+    if (!dockEl) return;
+
+    const handleWheel = (e) => {
+      // Stop event from bubbling to window (blocks Lenis momentum scroll)
+      e.stopPropagation();
+
+      // Find any scrollable container under the pointer (e.g., .playlist-items or .deck-card)
+      let el = e.target;
+      let scrollable = null;
+
+      while (el && el !== dockEl.parentElement) {
+        if (el.scrollHeight > el.clientHeight) {
+          const style = window.getComputedStyle(el);
+          const overflowY = style.overflowY;
+          if (overflowY === "auto" || overflowY === "scroll") {
+            scrollable = el;
+            break;
+          }
+        }
+        if (el === dockEl) break;
+        el = el.parentElement;
+      }
+
+      if (scrollable) {
+        const { scrollTop, scrollHeight, clientHeight } = scrollable;
+        const isAtTop = scrollTop <= 0 && e.deltaY < 0;
+        const isAtBottom = scrollTop + clientHeight >= scrollHeight - 1 && e.deltaY > 0;
+
+        if (isAtTop || isAtBottom) {
+          e.preventDefault();
+        }
+        return;
+      }
+
+      // If neither the deck nor any child has scrollable content, prevent scrolling the page behind
+      e.preventDefault();
+    };
+
+    dockEl.addEventListener("wheel", handleWheel, { passive: false });
+
+    return () => {
+      dockEl.removeEventListener("wheel", handleWheel);
+    };
+  }, [isDeckOpen, showPlaylist]);
 
   // Notify parent of playing state (for header widget)
   useEffect(() => {
@@ -342,10 +393,15 @@ export default function MusicPlayer({ isDeckOpen, setIsDeckOpen, onPlayingStateC
 
       {/* FLOATING MUSIC CONTROLLER DOCK (Bottom Right) */}
       <aside
+        ref={dockRef}
         className={`music-dock ${isDeckOpen ? "dock-expanded" : "dock-collapsed"}`}
         aria-label="Portfolio Soundtrack Player"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
+        data-lenis-prevent={isDeckOpen ? "true" : undefined}
+        onTouchMove={(e) => {
+          if (isDeckOpen) e.stopPropagation();
+        }}
       >
         {/* COLLAPSED MINI-PILL */}
         {!isDeckOpen ? (
@@ -414,7 +470,11 @@ export default function MusicPlayer({ isDeckOpen, setIsDeckOpen, onPlayingStateC
           </div>
         ) : (
           /* EXPANDED NEO-BRUTALIST STUDIO DECK */
-          <div className="deck-card">
+          <div
+            className="deck-card"
+            data-lenis-prevent="true"
+            onTouchMove={(e) => e.stopPropagation()}
+          >
             {/* Top Eyebrow Bar */}
             <div className="deck-header">
               <div className="deck-eyebrow">
@@ -626,12 +686,16 @@ export default function MusicPlayer({ isDeckOpen, setIsDeckOpen, onPlayingStateC
 
             {/* PLAYLIST DRAWER */}
             {showPlaylist && (
-              <div className="deck-playlist">
+              <div className="deck-playlist" data-lenis-prevent="true">
                 <div className="playlist-heading">
                   <span>SELECT TRACK</span>
                   <small>AUTO-EXTRACTS COVER ART & METADATA</small>
                 </div>
-                <div className="playlist-items">
+                <div
+                  className="playlist-items"
+                  data-lenis-prevent="true"
+                  onTouchMove={(e) => e.stopPropagation()}
+                >
                   {tracks.map((t, idx) => (
                     <div
                       key={t.id}

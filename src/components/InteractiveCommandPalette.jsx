@@ -232,6 +232,7 @@ export default function InteractiveCommandPalette({
     <div className="awwwards-cmd-backdrop" onClick={() => setIsOpen(false)}>
       <div
         className="awwwards-cmd-palette"
+        data-lenis-prevent="true"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"

@@ -138,7 +138,7 @@ button {
 }
 
 .hero {
-    min-height: 690px;
+    min-height: auto;
     background: var(--lime);
     position: relative;
     overflow: hidden;
@@ -148,7 +148,7 @@ button {
 .hero-inner {
     max-width: 1440px;
     margin: auto;
-    padding: 65px 7% 25px;
+    padding: 24px 7% 16px;
     position: relative;
     z-index: 2
 }
@@ -182,9 +182,9 @@ button {
 }
 
 .hero h1 {
-    font: 800 clamp(76px, 10.8vw, 154px)/.91 Manrope, sans-serif;
+    font: 800 clamp(62px, 8.5vw, 120px)/.92 Manrope, sans-serif;
     letter-spacing: -.095em;
-    margin: 72px 0 38px;
+    margin: 14px 0 16px;
     max-width: 1000px;
     position: relative
 }
@@ -195,7 +195,21 @@ button {
     border: 1.5px solid var(--ink);
     box-shadow: 5px 6px 0 var(--ink);
     display: inline-block;
-    transform: rotate(-1deg)
+    transform: rotate(-1deg);
+    transform-style: preserve-3d;
+    transition: transform 0.12s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.12s ease;
+    will-change: transform, box-shadow;
+    cursor: default;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.actually-text-depth {
+    display: inline-block;
+    transform: translateZ(12px);
+    transform-style: preserve-3d;
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 .outlined-word {
@@ -215,24 +229,32 @@ button {
 
 .hero-foot {
     display: flex;
-    align-items: flex-end;
-    gap: 40px
+    align-items: center;
+    gap: 32px;
 }
 
 .hero-foot p {
     font-size: 18px;
     line-height: 1.45;
-    margin: 0 auto 0 0
+    margin: 0 auto 0 0;
+}
+
+.hero-cta-group {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    transform: translateY(-8px);
 }
 
 .round-cta {
     background: var(--coral);
-    padding: 16px 21px
+    padding: 15px 22px;
+    font-size: 13.5px;
 }
 
 .hero-stamp {
-    width: 108px;
-    height: 108px;
+    width: 104px;
+    height: 104px;
     background: var(--coral);
     border: 1.5px solid var(--ink);
     border-radius: 50%;
@@ -248,7 +270,7 @@ button {
 
 .hero-index {
     border-top: 1px solid var(--line);
-    margin-top: 65px;
+    margin-top: 24px;
     padding-top: 15px;
     display: flex;
     justify-content: space-between;
@@ -610,7 +632,6 @@ h2 {
     font: 600 11.5px "DM Mono", monospace;
     letter-spacing: 1.2px;
     white-space: nowrap;
-    padding-top: 8px;
     color: var(--muted)
 }
 
@@ -689,16 +710,14 @@ h2 {
 
 .skill-top {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    font: 600 12px "DM Mono", monospace;
-    letter-spacing: 1px
+    margin-bottom: 6px;
 }
 
 .skill-card h3 {
-    font: 800 22px/1.2 Manrope, sans-serif;
-    letter-spacing: -.03em;
-    margin: 28px 0 12px
+    font: 800 clamp(25px, 2.3vw, 28px)/1.2 "Manrope", sans-serif;
+    letter-spacing: -.035em;
+    margin: 18px 0 12px;
 }
 
 .skill-card p {
@@ -732,38 +751,48 @@ h2 {
 }
 
 .award-list {
-    border-top: 1px solid var(--line)
+    border-top: 1.5px solid var(--line);
 }
 
 .award {
     display: grid;
-    grid-template-columns: 35px 1fr 20px;
-    gap: 12px;
+    grid-template-columns: 40px 1fr 24px;
+    gap: 16px;
     align-items: center;
-    padding: 19px 0;
-    border-bottom: 1px solid var(--line);
-    transition: padding .2s
+    padding: 22px 0;
+    border-bottom: 1.5px solid var(--line);
+    transition: padding .2s ease;
+    text-decoration: none;
+    color: var(--ink);
 }
 
 .award:hover {
-    padding-left: 8px
+    padding-left: 8px;
 }
 
 .award-num {
-    font: 10px "DM Mono";
-    color: #a17bdd
+    font: 700 15px "DM Mono", monospace;
+    letter-spacing: 0.5px;
+    color: #926ec9;
 }
 
 .award b {
-    font-size: 13px;
-    display: block
+    font: 700 18px/1.35 "Manrope", sans-serif;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    display: block;
+    transition: color 0.2s ease;
+}
+
+.award:hover b {
+    color: #794bb7;
 }
 
 .award small {
     display: block;
     color: var(--muted);
-    font-size: 11px;
-    margin-top: 5px
+    font: 500 14px/1.4 "DM Sans", sans-serif;
+    margin-top: 6px;
 }
 
 .education-card {
@@ -828,7 +857,7 @@ h2 {
 .footer {
     background: var(--ink);
     color: var(--paper);
-    padding: 95px 7% 25px
+    padding: 95px 7% 125px
 }
 
 .footer-top {
@@ -877,29 +906,33 @@ h2 {
 }
 
 .footer-logo {
-    font-size: 18px
+    font-size: 20px
 }
 
 .contact-links {
     display: flex;
-    gap: 20px;
+    gap: 26px;
+    align-items: center;
     flex-wrap: wrap
 }
 
 .contact-links a {
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    gap: 7px;
-    font-size: 11px;
-    color: #d1cbd9
+    gap: 9px;
+    font: 600 clamp(15px, 1.15vw, 17px) "DM Sans", sans-serif;
+    color: #ded9e7;
+    text-decoration: none;
+    transition: color 0.2s ease, transform 0.2s ease
 }
 
 .contact-links a:hover {
-    color: var(--lime)
+    color: var(--lime);
+    transform: translateY(-2px)
 }
 
 .copyright {
-    font: 9px "DM Mono";
+    font: 600 12px "DM Mono", monospace;
     letter-spacing: 1px;
     color: #a9a2b2;
     white-space: nowrap
@@ -953,7 +986,7 @@ h2 {
     }
 
     .contact-links {
-        gap: 14px 20px
+        gap: 16px 24px
     }
 }
 
@@ -1151,7 +1184,6 @@ h2 {
     }
 
     .job-head>span {
-        padding: 0;
         font-size: 11px
     }
 
@@ -1182,8 +1214,8 @@ h2 {
     }
 
     .skill-card h3 {
-        font-size: 20px;
-        margin: 22px 0 10px
+        font-size: 24px;
+        margin: 18px 0 10px;
     }
 
     .skill-card p {
@@ -1201,7 +1233,7 @@ h2 {
     }
 
     .footer {
-        padding: 75px 6% 25px
+        padding: 75px 6% 125px
     }
 
     .footer-top {
@@ -1313,6 +1345,7 @@ h2 {
     color: var(--ink);
     max-width: calc(100vw - 36px);
     box-sizing: border-box;
+    overscroll-behavior: contain;
     -webkit-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
@@ -1544,6 +1577,7 @@ h2 {
     max-height: 90vh;
     overflow-y: auto;
     overflow-x: hidden;
+    overscroll-behavior: contain;
     box-sizing: border-box;
     scrollbar-width: thin;
     scrollbar-color: var(--coral) color-mix(in srgb, var(--ink) 8%, transparent);
@@ -2136,6 +2170,7 @@ h2 {
     gap: 6px;
     max-height: 160px;
     overflow-y: auto;
+    overscroll-behavior: contain;
     padding-right: 4px;
     scrollbar-width: thin;
     scrollbar-color: var(--coral) color-mix(in srgb, var(--ink) 8%, transparent);
@@ -2534,11 +2569,11 @@ html.lenis body {
     justify-content: center;
     will-change: transform;
     transition: width 0.28s cubic-bezier(0.16, 1, 0.3, 1),
-                height 0.28s cubic-bezier(0.16, 1, 0.3, 1),
-                margin 0.28s cubic-bezier(0.16, 1, 0.3, 1),
-                background 0.22s ease,
-                border-color 0.22s ease,
-                box-shadow 0.22s ease;
+        height 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+        margin 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+        background 0.22s ease,
+        border-color 0.22s ease,
+        box-shadow 0.22s ease;
     box-sizing: border-box;
 }
 
@@ -2668,17 +2703,32 @@ html.lenis body {
     animation: wordRise 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
-.kinetic-line:nth-child(1) .kinetic-word:nth-child(1) { animation-delay: 0.08s; }
-.kinetic-line:nth-child(1) .kinetic-word:nth-child(2) { animation-delay: 0.16s; }
-.kinetic-line:nth-child(3) .kinetic-word:nth-child(1) { animation-delay: 0.24s; }
-.kinetic-line:nth-child(3) .kinetic-word:nth-child(2) { animation-delay: 0.32s; }
-.kinetic-line:nth-child(5) .kinetic-word:nth-child(1) { animation-delay: 0.40s; }
+.kinetic-line:nth-child(1) .kinetic-word:nth-child(1) {
+    animation-delay: 0.08s;
+}
+
+.kinetic-line:nth-child(1) .kinetic-word:nth-child(2) {
+    animation-delay: 0.16s;
+}
+
+.kinetic-line:nth-child(3) .kinetic-word:nth-child(1) {
+    animation-delay: 0.24s;
+}
+
+.kinetic-line:nth-child(3) .kinetic-word:nth-child(2) {
+    animation-delay: 0.32s;
+}
+
+.kinetic-line:nth-child(5) .kinetic-word:nth-child(1) {
+    animation-delay: 0.40s;
+}
 
 @keyframes wordRise {
     from {
         opacity: 0;
         transform: translateY(32px) rotate(2deg);
     }
+
     to {
         opacity: 1;
         transform: translateY(0) rotate(0deg);
@@ -2714,8 +2764,13 @@ html.lenis body {
 }
 
 @keyframes stamp-spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 .scroll-explore-prompt {
@@ -2803,13 +2858,23 @@ html.lenis body {
 }
 
 @keyframes marqueeLeft {
-    0% { transform: translateX(0); }
-    100% { transform: translateX(-50%); }
+    0% {
+        transform: translateX(0);
+    }
+
+    100% {
+        transform: translateX(-50%);
+    }
 }
 
 @keyframes marqueeRight {
-    0% { transform: translateX(-50%); }
-    100% { transform: translateX(0); }
+    0% {
+        transform: translateX(-50%);
+    }
+
+    100% {
+        transform: translateX(0);
+    }
 }
 
 .marquee-item {
@@ -2911,6 +2976,7 @@ html.lenis body {
         opacity: 0;
         transform: translateY(-8px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -2947,10 +3013,17 @@ html.lenis body {
     gap: 8px;
 }
 
-.bp-icon {
+.bp-num {
     flex-shrink: 0;
-    color: var(--coral);
-    margin-top: 2px;
+    font: 700 9px "DM Mono", monospace;
+    letter-spacing: .5px;
+    color: var(--ink);
+    background: rgba(33, 27, 45, 0.08);
+    border: 1px solid rgba(33, 27, 45, 0.2);
+    border-radius: 4px;
+    padding: 1px 5px;
+    margin-top: 1.5px;
+    line-height: 1.2;
 }
 
 /* Stack Tag micro scale */
@@ -3026,11 +3099,28 @@ html.lenis body {
     width: 38px;
     height: 38px;
     border-radius: 50%;
-    border: 1px solid var(--ink);
+    border: 1.5px solid var(--ink);
     background: var(--paper);
+    color: var(--ink) !important;
     display: grid;
     place-items: center;
     transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.skill-icon-bubble svg {
+    color: var(--ink) !important;
+    stroke: var(--ink) !important;
+}
+
+.skill-card.ink .skill-icon-bubble {
+    background: var(--paper);
+    border: 1.5px solid var(--ink);
+    color: var(--ink) !important;
+}
+
+.skill-card.ink .skill-icon-bubble svg {
+    color: var(--ink) !important;
+    stroke: var(--ink) !important;
 }
 
 .awwwards-skill-card:hover .skill-icon-bubble {
@@ -3164,6 +3254,7 @@ html.lenis body {
         opacity: 0;
         transform: scale(0.96) translateY(-10px);
     }
+
     to {
         opacity: 1;
         transform: scale(1) translateY(0);
@@ -3340,6 +3431,7 @@ html.lenis body {
         opacity: 0;
         transform: translate(-50%, 20px) scale(0.92);
     }
+
     100% {
         opacity: 1;
         transform: translate(-50%, 0) scale(1);
@@ -3368,7 +3460,8 @@ html.lenis body {
     background: rgba(228, 255, 98, 0.12);
 }
 
-.job-date-pill {
+.job-date-pill,
+.job-head>span.job-date-pill {
     font: 600 11px "DM Mono", monospace;
     letter-spacing: 1px;
     background: var(--paper);
@@ -3376,6 +3469,11 @@ html.lenis body {
     border-radius: 999px;
     padding: 4px 10px;
     color: var(--muted);
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+    white-space: nowrap;
+    align-self: flex-start;
 }
 
 .awwwards-award-row {
@@ -3398,8 +3496,13 @@ html.lenis body {
 
 /* General keyframes */
 @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
 }
 
 @keyframes mobileDrawerSlide {
@@ -3407,6 +3510,7 @@ html.lenis body {
         opacity: 0;
         transform: translateY(-12px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -3429,7 +3533,8 @@ body,
 }
 
 /* 1. Touch & Pointer Coarse Rules (Disable 3D tilt & desktop cursor on touch) */
-@media (hover: none), (pointer: coarse) {
+@media (hover: none),
+(pointer: coarse) {
     .awwwards-cursor-container {
         display: none !important;
     }
@@ -3449,6 +3554,7 @@ body,
 
 /* 2. Responsive Adjustments for Tablets & Mobiles (<= 768px) */
 @media (max-width: 768px) {
+
     /* Floating Controls: Stacking without collisions */
     .awwwards-scroll-badge {
         bottom: 74px !important;
@@ -3526,7 +3632,8 @@ body,
     }
 
     .cmd-input {
-        font-size: 16px !important; /* CRITICAL: Prevents auto-zoom on iOS */
+        font-size: 16px !important;
+        /* CRITICAL: Prevents auto-zoom on iOS */
     }
 
     .cmd-results {
@@ -3564,6 +3671,7 @@ body,
 
 /* 3. Dedicated Smartphone Styles (<= 650px) */
 @media (max-width: 650px) {
+
     /* HERO SECTION: Fluid Typography & Clean Spacing */
     .hero {
         min-height: auto;
@@ -3571,7 +3679,7 @@ body,
     }
 
     .hero-inner {
-        padding: 30px 5% 15px;
+        padding: 16px 5% 12px;
     }
 
     .hero-kicker,
@@ -3581,8 +3689,8 @@ body,
     }
 
     .hero h1 {
-        font-size: clamp(38px, 12vw, 68px) !important;
-        margin: 12px 0 20px !important;
+        font-size: clamp(34px, 10.5vw, 54px) !important;
+        margin: 6px 0 10px !important;
         line-height: 0.96 !important;
         letter-spacing: -0.065em !important;
     }
@@ -3596,39 +3704,39 @@ body,
     .hero-foot {
         flex-direction: column;
         align-items: flex-start;
-        gap: 20px;
+        gap: 10px;
     }
 
     .hero-foot p {
         width: 100%;
-        font-size: 15px;
-        line-height: 1.5;
+        font-size: 14.5px;
+        line-height: 1.45;
         margin: 0;
     }
 
     .hero-cta-group {
         display: flex;
         align-items: center;
-        gap: 14px;
+        gap: 12px;
         width: 100%;
     }
 
     .round-cta {
         flex: 1;
         justify-content: center;
-        padding: 13px 18px;
+        padding: 12px 16px;
         font-size: 12.5px;
     }
 
     .hero-stamp {
-        width: 72px;
-        height: 72px;
-        font-size: 7.5px;
+        width: 66px;
+        height: 66px;
+        font-size: 7px;
         flex-shrink: 0;
     }
 
     .hero-index {
-        margin-top: 28px;
+        margin-top: 14px;
         font-size: 8.5px;
     }
 
@@ -3775,6 +3883,15 @@ body,
         font-size: 14.5px;
     }
 
+    .job-date-pill,
+    .job-head>span.job-date-pill {
+        padding: 4px 10px;
+        width: fit-content;
+        display: inline-flex;
+        align-self: flex-start;
+        margin-top: 2px;
+    }
+
     .job-detail {
         font-size: 15px;
         line-height: 1.55;
@@ -3804,8 +3921,8 @@ body,
     }
 
     .skill-card h3 {
-        font-size: 19px;
-        margin: 18px 0 10px;
+        font-size: 23px;
+        margin: 16px 0 10px;
     }
 
     /* CREDENTIALS */
@@ -3815,9 +3932,22 @@ body,
     }
 
     .award {
-        grid-template-columns: 28px 1fr 20px;
-        gap: 8px;
-        padding: 15px 0;
+        grid-template-columns: 34px 1fr 20px;
+        gap: 12px;
+        padding: 18px 0;
+    }
+
+    .award-num {
+        font-size: 13.5px;
+    }
+
+    .award b {
+        font-size: 16px;
+    }
+
+    .award small {
+        font-size: 13px;
+        margin-top: 4px;
     }
 
     .education-card {
@@ -3831,7 +3961,7 @@ body,
 
     /* FOOTER */
     .footer {
-        padding: 55px 5% 24px;
+        padding: 55px 5% 124px;
     }
 
     .footer-top {
@@ -3869,22 +3999,30 @@ body,
     .contact-links {
         display: flex;
         flex-direction: column;
-        gap: 10px;
+        gap: 12px;
         width: 100%;
     }
 
     .contact-links a {
         display: flex;
         align-items: center;
-        gap: 8px;
-        padding: 10px 14px;
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(255, 255, 255, 0.15);
-        border-radius: 8px;
-        font-size: 12px;
-        color: #eee;
+        gap: 12px;
+        padding: 13px 18px;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: 12px;
+        font: 600 15.5px "DM Sans", sans-serif;
+        color: #fff;
         box-sizing: border-box;
         width: 100%;
+        transition: all 0.2s ease;
+    }
+
+    .contact-links a:hover,
+    .contact-links a:active {
+        background: rgba(200, 245, 96, 0.15);
+        border-color: var(--lime);
+        color: var(--lime);
     }
 }
 
@@ -3909,4 +4047,3 @@ body,
         font-size: 6.5px;
     }
 }
-

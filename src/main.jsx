@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { createRoot } from "react-dom/client";
 import {
   ArrowDownRight,
@@ -315,6 +315,79 @@ function SectionLabel({ children, light = false }) {
   );
 }
 
+function ActuallyBox() {
+  const boxRef = useRef(null);
+
+  useEffect(() => {
+    const box = boxRef.current;
+    if (!box) return;
+    const heroSection = box.closest(".hero");
+    if (!heroSection) return;
+
+    let rafId = null;
+
+    const handleMouseMove = (e) => {
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+      if (window.matchMedia("(hover: none) or (pointer: coarse)").matches) return;
+
+      if (rafId) cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(() => {
+        const rect = box.getBoundingClientRect();
+        const boxCenterX = rect.left + rect.width / 2;
+        const boxCenterY = rect.top + rect.height / 2;
+        const heroRect = heroSection.getBoundingClientRect();
+
+        const halfW = heroRect.width / 2 || window.innerWidth / 2;
+        const halfH = heroRect.height / 2 || window.innerHeight / 2;
+
+        const relX = Math.max(-1.15, Math.min(1.15, (e.clientX - boxCenterX) / halfW));
+        const relY = Math.max(-1.15, Math.min(1.15, (e.clientY - boxCenterY) / halfH));
+
+        const maxRotX = 20;
+        const maxRotY = 22;
+
+        const rotX = -relY * maxRotX;
+        const rotY = relX * maxRotY;
+
+        const transX = relX * 6;
+        const transY = relY * 5;
+
+        const shadowX = 5 - relX * 4;
+        const shadowY = 6 - relY * 4;
+
+        box.style.transform = `perspective(700px) rotateX(${rotX.toFixed(2)}deg) rotateY(${rotY.toFixed(2)}deg) rotate(-1deg) translate3d(${transX.toFixed(1)}px, ${transY.toFixed(1)}px, 12px)`;
+        box.style.boxShadow = `${shadowX.toFixed(1)}px ${shadowY.toFixed(1)}px 0 var(--ink)`;
+      });
+    };
+
+    const handleMouseLeave = () => {
+      if (rafId) cancelAnimationFrame(rafId);
+      box.style.transform = `perspective(700px) rotateX(0deg) rotateY(0deg) rotate(-1deg) translate3d(0px, 0px, 0px)`;
+      box.style.boxShadow = `5px 6px 0 var(--ink)`;
+    };
+
+    heroSection.addEventListener("mousemove", handleMouseMove, { passive: true });
+    heroSection.addEventListener("mouseleave", handleMouseLeave, { passive: true });
+
+    return () => {
+      if (rafId) cancelAnimationFrame(rafId);
+      heroSection.removeEventListener("mousemove", handleMouseMove);
+      heroSection.removeEventListener("mouseleave", handleMouseLeave);
+    };
+  }, []);
+
+  return (
+    <span
+      ref={boxRef}
+      className="highlight-word kinetic-word actually-perspective-box"
+      onClick={() => sfx.playPop()}
+      data-cursor="click"
+    >
+      <span className="actually-text-depth">actually</span>
+    </span>
+  );
+}
+
 function Header() {
   const [open, setOpen] = useState(false);
   const nav = [
@@ -346,7 +419,6 @@ function Header() {
               sfx.playPop();
             }}
             data-magnetic
-            data-cursor="hover"
           >
             {name}
           </a>
@@ -358,7 +430,6 @@ function Header() {
         href={links.email}
         data-magnetic
         onClick={() => sfx.playPop()}
-        data-cursor="hover"
       >
         Let’s talk <ArrowUpRight size={15} />
       </a>
@@ -485,7 +556,7 @@ function App() {
               <br />
               <span className="kinetic-line">
                 <span className="kinetic-word">that</span>{" "}
-                <span className="highlight-word kinetic-word">actually</span>
+                <ActuallyBox />
               </span>
               <br />
               <span className="kinetic-line">
@@ -521,7 +592,6 @@ function App() {
                   href="#work"
                   data-magnetic
                   onClick={() => sfx.playPop()}
-                  data-cursor="hover"
                   data-cursor-text="WORK ↓"
                 >
                   Explore my work <ArrowDownRight size={19} />
@@ -794,7 +864,7 @@ function App() {
                     <b>{a.title}</b>
                     <small>{a.detail}</small>
                   </span>
-                  <ArrowUpRight size={17} className="award-arrow" />
+                  <ArrowUpRight size={20} className="award-arrow" />
                 </a>
               ))}
             </div>
@@ -856,7 +926,6 @@ function App() {
               href={links.email}
               data-magnetic
               onClick={() => sfx.playPop()}
-              data-cursor="hover"
             >
               Say hello <ArrowUpRight size={20} />
             </a>
@@ -882,7 +951,7 @@ function App() {
                 data-cursor-text="COPY"
                 title="Click to copy email address"
               >
-                <Mail size={15} /> ramanbhardwaj2005@gmail.com
+                <Mail size={19} /> ramanbhardwaj2005@gmail.com
               </a>
               <a
                 href={links.phone}
@@ -892,7 +961,7 @@ function App() {
                 data-cursor-text="COPY"
                 title="Click to copy phone number"
               >
-                <Phone size={15} /> +91 9318387705
+                <Phone size={19} /> +91 9318387705
               </a>
               <a
                 href={links.linkedin}
@@ -902,7 +971,7 @@ function App() {
                 onClick={() => sfx.playPop()}
                 data-cursor="external"
               >
-                <Linkedin size={15} /> LinkedIn
+                <Linkedin size={19} /> LinkedIn
               </a>
               <a
                 href={links.github}
@@ -912,7 +981,7 @@ function App() {
                 onClick={() => sfx.playPop()}
                 data-cursor="external"
               >
-                <Github size={15} /> GitHub
+                <Github size={19} /> GitHub
               </a>
             </div>
 
