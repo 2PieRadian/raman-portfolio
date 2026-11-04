@@ -92,12 +92,12 @@ export default function MusicPlayer({ isDeckOpen, setIsDeckOpen, onPlayingStateC
             prev.map((t, i) =>
               i === idx
                 ? {
-                    ...t,
-                    coverUrl: meta.coverUrl,
-                    title: meta.title || t.title,
-                    artist: meta.artist || t.artist,
-                    album: meta.album || t.album,
-                  }
+                  ...t,
+                  coverUrl: meta.coverUrl,
+                  title: meta.title || t.title,
+                  artist: meta.artist || t.artist,
+                  album: meta.album || t.album,
+                }
                 : t
             )
           );
@@ -115,17 +115,23 @@ export default function MusicPlayer({ isDeckOpen, setIsDeckOpen, onPlayingStateC
 
   // Track switching handler
   const playTrack = (index, shouldPlay = true) => {
+    const nextTrack = tracks[index];
     setCurrentIndex(index);
     setCurrentTime(0);
-    if (audioRef.current) {
+    setIsPlaying(shouldPlay);
+
+    if (audioRef.current && nextTrack) {
+      // Update audio source directly for instant response
+      if (!audioRef.current.src.endsWith(nextTrack.audioSrc)) {
+        audioRef.current.src = nextTrack.audioSrc;
+      }
       audioRef.current.currentTime = 0;
       if (shouldPlay) {
         audioRef.current
           .play()
           .then(() => setIsPlaying(true))
           .catch((err) => {
-            console.log("Audio autoplay waiting for user interaction:", err);
-            setIsPlaying(false);
+            console.log("Audio playback:", err);
           });
       }
     }
@@ -153,10 +159,10 @@ export default function MusicPlayer({ isDeckOpen, setIsDeckOpen, onPlayingStateC
       while (nextIdx === currentIndex) {
         nextIdx = Math.floor(Math.random() * tracks.length);
       }
-      playTrack(nextIdx, isPlaying);
+      playTrack(nextIdx, true);
     } else {
       const nextIdx = (currentIndex + 1) % tracks.length;
-      playTrack(nextIdx, isPlaying);
+      playTrack(nextIdx, true);
     }
   };
 
@@ -164,10 +170,11 @@ export default function MusicPlayer({ isDeckOpen, setIsDeckOpen, onPlayingStateC
     if (audioRef.current && audioRef.current.currentTime > 3) {
       audioRef.current.currentTime = 0;
       setCurrentTime(0);
+      audioRef.current.play().then(() => setIsPlaying(true)).catch(console.warn);
       return;
     }
     const prevIdx = (currentIndex - 1 + tracks.length) % tracks.length;
-    playTrack(prevIdx, isPlaying);
+    playTrack(prevIdx, true);
   };
 
   const handleTimeUpdate = () => {
