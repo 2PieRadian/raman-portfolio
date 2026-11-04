@@ -27,12 +27,8 @@ export function fireAwwwardsConfetti(originX = 0.5, originY = 0.5) {
   });
 }
 
-export default function InteractiveHeroCanvas() {
-  const canvasRef = useRef(null);
-  const containerRef = useRef(null);
-  const mouseRef = useRef({ x: -1000, y: -1000, radius: 140 });
-
-  // Live IST Time state
+// Live Indian Standard Time Ticker (used cleanly across desktop and mobile layouts)
+export function LiveTimeTicker() {
   const [istTime, setIstTime] = useState("");
 
   useEffect(() => {
@@ -52,6 +48,21 @@ export default function InteractiveHeroCanvas() {
     const timer = setInterval(updateTime, 1000);
     return () => clearInterval(timer);
   }, []);
+
+  return (
+    <div className="hero-live-time-ticker">
+      <span className="live-pulse-dot" />
+      <span className="live-time-label">GHAZIABAD, IN</span>
+      <span className="live-time-sep">/</span>
+      <span className="live-time-val">{istTime || "LIVE"}</span>
+    </div>
+  );
+}
+
+export default function InteractiveHeroCanvas() {
+  const canvasRef = useRef(null);
+  const containerRef = useRef(null);
+  const mouseRef = useRef({ x: -1000, y: -1000, radius: 140 });
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -79,8 +90,8 @@ export default function InteractiveHeroCanvas() {
 
     const initParticles = (width, height) => {
       particles = [];
-      const particleCount = Math.floor((width * height) / 18000); // Dynamic density
-      for (let i = 0; i < Math.max(particleCount, 25); i++) {
+      const particleCount = Math.floor((width * height) / 22000); // Optimized mobile density
+      for (let i = 0; i < Math.max(particleCount, 16); i++) {
         const x = Math.random() * width;
         const y = Math.random() * height;
         particles.push({
@@ -88,11 +99,11 @@ export default function InteractiveHeroCanvas() {
           y,
           originX: x,
           originY: y,
-          vx: (Math.random() - 0.5) * 0.4,
-          vy: (Math.random() - 0.5) * 0.4,
+          vx: (Math.random() - 0.5) * 0.35,
+          vy: (Math.random() - 0.5) * 0.35,
           glyph: glyphs[Math.floor(Math.random() * glyphs.length)],
-          size: Math.random() * 8 + 10,
-          color: Math.random() > 0.4 ? "rgba(33, 27, 45, 0.22)" : "rgba(33, 27, 45, 0.45)",
+          size: Math.random() * 6 + 10,
+          color: Math.random() > 0.4 ? "rgba(33, 27, 45, 0.18)" : "rgba(33, 27, 45, 0.35)",
           rotation: Math.random() * Math.PI * 2,
           rotSpeed: (Math.random() - 0.5) * 0.02,
         });
@@ -111,7 +122,7 @@ export default function InteractiveHeroCanvas() {
     };
 
     window.addEventListener("resize", handleResize);
-    canvas.parentElement.addEventListener("mousemove", handleMouseMove);
+    canvas.parentElement.addEventListener("mousemove", handleMouseMove, { passive: true });
     canvas.parentElement.addEventListener("mouseleave", handleMouseLeave);
 
     handleResize();
@@ -175,13 +186,13 @@ export default function InteractiveHeroCanvas() {
         ctx.fillText(p.glyph, 0, 0);
         ctx.restore();
 
-        // Connect nearby points with delicate neo-brutalist dashed lines
+        // Connect nearby points with delicate dashed lines
         for (let j = i + 1; j < particles.length; j++) {
           const p2 = particles[j];
           const dist2 = Math.hypot(p.x - p2.x, p.y - p2.y);
-          if (dist2 < 110) {
+          if (dist2 < 95) {
             ctx.beginPath();
-            ctx.strokeStyle = `rgba(33, 27, 45, ${0.1 * (1 - dist2 / 110)})`;
+            ctx.strokeStyle = `rgba(33, 27, 45, ${0.08 * (1 - dist2 / 95)})`;
             ctx.lineWidth = 1;
             ctx.setLineDash([3, 4]);
             ctx.moveTo(p.x, p.y);
@@ -211,15 +222,6 @@ export default function InteractiveHeroCanvas() {
   return (
     <div className="hero-interactive-canvas-wrap" ref={containerRef} aria-hidden="true">
       <canvas ref={canvasRef} className="hero-interactive-canvas" />
-
-      {/* Floating Live IST Time ticker in corner of Hero */}
-      <div className="hero-live-time-ticker">
-        <span className="live-pulse-dot" />
-        <span className="live-time-label">GHAZIABAD, IN</span>
-        <span className="live-time-sep">/</span>
-        <span className="live-time-val">{istTime || "LIVE"}</span>
-      </div>
     </div>
   );
 }
-

@@ -36,7 +36,8 @@ export default function SmoothScroll() {
       gestureOrientation: "vertical",
       smoothWheel: true,
       wheelMultiplier: 0.95,
-      touchMultiplier: 1.5,
+      touchMultiplier: 1.0,
+      syncTouch: true,
     });
 
     globalLenis = lenis;

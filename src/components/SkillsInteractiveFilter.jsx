@@ -19,9 +19,12 @@ export default function SkillsInteractiveFilter({ skillGroups }) {
     ? skillGroups
     : skillGroups.filter((g) => g.title.toLowerCase().includes(activeCategory.toLowerCase()));
 
-  const handleCategorySelect = (id) => {
+  const handleCategorySelect = (e, id) => {
     sfx.playPop();
     setActiveCategory(id);
+    try {
+      e.currentTarget.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+    } catch (_) {}
   };
 
   return (
@@ -33,7 +36,7 @@ export default function SkillsInteractiveFilter({ skillGroups }) {
             key={cat.id}
             type="button"
             className={`filter-pill ${activeCategory === cat.id ? "active" : ""}`}
-            onClick={() => handleCategorySelect(cat.id)}
+            onClick={(e) => handleCategorySelect(e, cat.id)}
             data-cursor="click"
             data-cursor-text="FILTER"
           >

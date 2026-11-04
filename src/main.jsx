@@ -30,7 +30,7 @@ import {
 import MusicPlayer from "./components/MusicPlayer";
 import CustomCursor from "./components/CustomCursor";
 import SmoothScroll, { scrollToSection } from "./components/SmoothScroll";
-import InteractiveHeroCanvas, { fireAwwwardsConfetti } from "./components/InteractiveHeroCanvas";
+import InteractiveHeroCanvas, { fireAwwwardsConfetti, LiveTimeTicker } from "./components/InteractiveHeroCanvas";
 import Project3DCard from "./components/Project3DCard";
 import MarqueeRibbon from "./components/MarqueeRibbon";
 import SkillsInteractiveFilter from "./components/SkillsInteractiveFilter";
@@ -315,7 +315,7 @@ function SectionLabel({ children, light = false }) {
   );
 }
 
-function Header({ musicState, onOpenDeck, onOpenCmd, isSfxOn, onToggleSfx }) {
+function Header() {
   const [open, setOpen] = useState(false);
   const nav = [
     ["Work", "#work"],
@@ -333,19 +333,7 @@ function Header({ musicState, onOpenDeck, onOpenCmd, isSfxOn, onToggleSfx }) {
         data-magnetic
         onClick={() => sfx.playPop()}
       >
-        <span
-          className="mark spin-hover"
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            fireAwwwardsConfetti(0.1, 0.1);
-          }}
-          data-cursor="click"
-          data-cursor-text="BURST"
-        >
-          ✳
-        </span>{" "}
-        raman<span className="wordmark-light">bhardwaj.</span>
+        <span className="mark">✳</span> raman<span className="wordmark-light">bhardwaj.</span>
       </a>
 
       <nav className={open ? "nav open" : "nav"}>
@@ -364,67 +352,6 @@ function Header({ musicState, onOpenDeck, onOpenCmd, isSfxOn, onToggleSfx }) {
           </a>
         ))}
       </nav>
-
-      {/* Quick Command Launcher pill in topbar */}
-      <button
-        type="button"
-        className="topbar-cmd-pill"
-        onClick={onOpenCmd}
-        title="Open Command Palette (Cmd+K / Ctrl+K)"
-        data-magnetic
-        data-cursor="click"
-        data-cursor-text="SEARCH"
-      >
-        <Command size={13} />
-        <span>Menu</span>
-        <kbd className="cmd-kbd">⌘K</kbd>
-      </button>
-
-      {/* SFX sound toggle */}
-      <button
-        type="button"
-        className={`topbar-sfx-pill ${isSfxOn ? "on" : "muted"}`}
-        onClick={onToggleSfx}
-        title={isSfxOn ? "Tactile Sound FX: ON (Click to mute)" : "Tactile Sound FX: MUTED"}
-        data-magnetic
-        data-cursor="click"
-        data-cursor-text={isSfxOn ? "MUTE" : "UNMUTE"}
-      >
-        {isSfxOn ? <Volume2 size={13} /> : <VolumeX size={13} />}
-      </button>
-
-      {/* Soundtrack Status Pill */}
-      {musicState && (
-        <button
-          type="button"
-          className={`topbar-music-pill ${musicState.isPlaying ? "playing" : ""}`}
-          onClick={() => {
-            sfx.playSnap();
-            if (!musicState.isPlaying) {
-              musicState.togglePlay();
-            } else {
-              onOpenDeck();
-            }
-          }}
-          title={musicState.isPlaying ? "Click to open deck" : "Click to play soundtrack"}
-          aria-label="Soundtrack status"
-          data-magnetic
-          data-cursor="click"
-          data-cursor-text={musicState.isPlaying ? "DECK ♫" : "PLAY ♫"}
-        >
-          <span className="topbar-music-dot" />
-          <span className="topbar-music-label">
-            {musicState.isPlaying
-              ? `${musicState.currentTrack?.title} · ${musicState.currentTrack?.artist}`
-              : "Soundtrack: 01 / 02"}
-          </span>
-          <span className="topbar-music-eq" aria-hidden="true">
-            <span />
-            <span />
-            <span />
-          </span>
-        </button>
-      )}
 
       <a
         className="nav-cta"
@@ -530,26 +457,23 @@ function App() {
         onOpenDeck={() => setIsDeckOpen(true)}
       />
 
-      <Header
-        musicState={musicState}
-        onOpenDeck={() => setIsDeckOpen(true)}
-        onOpenCmd={() => setIsCmdOpen(true)}
-        isSfxOn={isSfxOn}
-        onToggleSfx={handleToggleSfx}
-      />
+      <Header />
 
       <main>
         {/* HERO SECTION */}
         <section className="hero">
-          {/* Interactive geometric spring canvas & live IST clock */}
+          {/* Interactive geometric spring canvas */}
           <InteractiveHeroCanvas />
 
           <div className="hero-inner">
             <div className="hero-kicker">
               <SectionLabel>A DEVELOPER WHO LIKES THE DETAILS</SectionLabel>
-              <span className="availability">
-                <i /> OPEN TO OPPORTUNITIES
-              </span>
+              <div className="hero-kicker-badges">
+                <span className="availability">
+                  <i /> OPEN TO OPPORTUNITIES
+                </span>
+                <LiveTimeTicker />
+              </div>
             </div>
 
             {/* Kinetic Typography */}
@@ -591,35 +515,37 @@ function App() {
                 <br />A little obsessed with making software useful.
               </p>
 
-              <a
-                className="round-cta"
-                href="#work"
-                data-magnetic
-                onClick={() => sfx.playPop()}
-                data-cursor="hover"
-                data-cursor-text="WORK ↓"
-              >
-                Explore my work <ArrowDownRight size={19} />
-              </a>
+              <div className="hero-cta-group">
+                <a
+                  className="round-cta"
+                  href="#work"
+                  data-magnetic
+                  onClick={() => sfx.playPop()}
+                  data-cursor="hover"
+                  data-cursor-text="WORK ↓"
+                >
+                  Explore my work <ArrowDownRight size={19} />
+                </a>
 
-              <div
-                className="hero-stamp interactive-stamp"
-                onClick={handleStampClick}
-                data-magnetic
-                data-cursor="click"
-                data-cursor-text="BURST ✳"
-                title="Click for celebration blast!"
-              >
-                <div className="stamp-inner">
-                  CODE WITH
-                  <br />A POINT OF VIEW{" "}
-                  <Asterisk size={24} className="stamp-star" />
+                <div
+                  className="hero-stamp interactive-stamp"
+                  onClick={handleStampClick}
+                  data-magnetic
+                  data-cursor="click"
+                  data-cursor-text="BURST ✳"
+                  title="Click for celebration blast!"
+                >
+                  <div className="stamp-inner">
+                    CODE WITH
+                    <br />A POINT OF VIEW{" "}
+                    <Asterisk size={20} className="stamp-star" />
+                  </div>
                 </div>
               </div>
             </div>
 
             <div className="hero-index">
-              <span>INDIA · GHAZIABAD</span>
+              <span className="hero-index-location">INDIA · GHAZIABAD</span>
               <span
                 className="scroll-explore-prompt"
                 onClick={() => scrollToSection("#work")}

@@ -3449,22 +3449,511 @@ html.lenis body {
     to { opacity: 1; }
 }
 
-@media (max-width: 768px) {
+@keyframes mobileDrawerSlide {
+    from {
+        opacity: 0;
+        transform: translateY(-12px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ==========================================================================
+   MASTERCLASS MOBILE RESPONSIVE SYSTEM (TABLETS, MOBILES & FOLDABLES)
+   ========================================================================== */
+
+/* Universal Mobile Safety: Zero unwanted horizontal scroll & touch tap optimization */
+html,
+body,
+#root,
+.awwwards-site-wrapper {
+    overflow-x: hidden !important;
+    width: 100%;
+    max-width: 100vw;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* 1. Touch & Pointer Coarse Rules (Disable 3D tilt & desktop cursor on touch) */
+@media (hover: none), (pointer: coarse) {
     .awwwards-cursor-container {
         display: none !important;
     }
 
-    .hero-live-time-ticker {
-        position: static;
-        margin-top: 15px;
-        display: inline-flex;
+    .awwwards-tilt-card {
+        transform: none !important;
+    }
+
+    .card-specular-glare {
+        display: none !important;
+    }
+
+    * {
+        cursor: auto !important;
+    }
+}
+
+/* 2. Responsive Adjustments for Tablets & Mobiles (<= 768px) */
+@media (max-width: 768px) {
+    /* Floating Controls: Stacking without collisions */
+    .awwwards-scroll-badge {
+        bottom: 74px !important;
+        right: 14px !important;
+        left: auto !important;
+        padding: 6px 12px;
+        font-size: 10px;
+    }
+
+    .music-dock {
+        right: 14px !important;
+        bottom: 14px !important;
+        left: auto !important;
+        max-width: calc(100vw - 28px);
+    }
+
+    .deck-card {
+        width: 100%;
+        max-width: 100%;
+        padding: 18px 14px;
+        max-height: 82vh;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .awwwards-toast-pill {
+        bottom: 74px !important;
+        max-width: calc(100vw - 32px);
+        box-sizing: border-box;
+        text-align: center;
+        padding: 10px 18px;
+        font-size: 11px;
+    }
+
+    /* Skills Filter Bar: Momentum Horizontal Swipeable Carousel */
+    .skills-filter-bar {
+        display: flex !important;
+        flex-wrap: nowrap !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 8px;
+        margin: 0 -6%;
+        padding-left: 6%;
+        padding-right: 6%;
+        scrollbar-width: none;
+    }
+
+    .skills-filter-bar::-webkit-scrollbar {
+        display: none;
+    }
+
+    .filter-pill {
+        flex-shrink: 0;
+        white-space: nowrap;
+        padding: 8px 15px;
+        font-size: 10.5px;
+    }
+
+    /* Command Palette: Mobile dialog */
+    .awwwards-cmd-backdrop {
+        padding-top: 36px;
+        padding-left: 12px;
+        padding-right: 12px;
+        align-items: flex-start;
     }
 
     .awwwards-cmd-palette {
-        max-width: 92vw;
+        width: 100%;
+        max-width: 100%;
+        max-height: 82vh;
     }
 
+    .cmd-header {
+        padding: 12px 14px;
+    }
+
+    .cmd-input {
+        font-size: 16px !important; /* CRITICAL: Prevents auto-zoom on iOS */
+    }
+
+    .cmd-results {
+        max-height: 54vh;
+    }
+
+    .cmd-key-hints {
+        display: none;
+    }
+
+    /* Marquee Ribbons on Mobile */
     .awwwards-marquee-container {
-        padding: 20px 0;
+        padding: 18px 0;
+        width: 100vw;
+        max-width: 100%;
+    }
+
+    .marquee-ribbon {
+        padding: 9px 0;
+    }
+
+    .marquee-item {
+        font-size: 11.5px;
+        letter-spacing: 1.2px;
+        gap: 16px;
+    }
+
+    /* Hide hero kicker, availability, live time, and location on mobile screens */
+    .hero-kicker,
+    .hero-live-time-ticker,
+    .hero-index-location {
+        display: none !important;
     }
 }
+
+/* 3. Dedicated Smartphone Styles (<= 650px) */
+@media (max-width: 650px) {
+    /* HERO SECTION: Fluid Typography & Clean Spacing */
+    .hero {
+        min-height: auto;
+        padding-bottom: 30px;
+    }
+
+    .hero-inner {
+        padding: 30px 5% 15px;
+    }
+
+    .hero-kicker,
+    .hero-live-time-ticker,
+    .hero-index-location {
+        display: none !important;
+    }
+
+    .hero h1 {
+        font-size: clamp(38px, 12vw, 68px) !important;
+        margin: 12px 0 20px !important;
+        line-height: 0.96 !important;
+        letter-spacing: -0.065em !important;
+    }
+
+    .hero-star {
+        font-size: 0.44em;
+        right: 4%;
+        top: 2%;
+    }
+
+    .hero-foot {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 20px;
+    }
+
+    .hero-foot p {
+        width: 100%;
+        font-size: 15px;
+        line-height: 1.5;
+        margin: 0;
+    }
+
+    .hero-cta-group {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        width: 100%;
+    }
+
+    .round-cta {
+        flex: 1;
+        justify-content: center;
+        padding: 13px 18px;
+        font-size: 12.5px;
+    }
+
+    .hero-stamp {
+        width: 72px;
+        height: 72px;
+        font-size: 7.5px;
+        flex-shrink: 0;
+    }
+
+    .hero-index {
+        margin-top: 28px;
+        font-size: 8.5px;
+    }
+
+    /* INTRO / ABOUT SECTION */
+    .section-pad {
+        padding: 60px 5%;
+    }
+
+    .intro {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+
+    .intro-copy {
+        padding-top: 0;
+    }
+
+    .intro-copy .lead {
+        font-size: 18px;
+        line-height: 1.5;
+    }
+
+    .intro-links {
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .intro-links a,
+    .soundtrack-trigger {
+        padding: 8px 12px;
+        font-size: 12px;
+    }
+
+    /* PROJECT CARDS */
+    .project-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+
+    .project-card,
+    .p2,
+    .p4 {
+        padding: 20px;
+        min-height: auto;
+        border-radius: 16px;
+    }
+
+    .project-card h3,
+    .p2 h3 {
+        font-size: clamp(30px, 8.5vw, 44px) !important;
+        margin-top: 36px !important;
+        letter-spacing: -0.05em;
+    }
+
+    .project-card h4 {
+        font-size: 16.5px;
+        margin-bottom: 10px;
+    }
+
+    .project-card p {
+        font-size: 14px;
+        line-height: 1.6;
+        margin-bottom: 16px;
+    }
+
+    .blueprint-toggle-btn {
+        width: 100%;
+        justify-content: center;
+        padding: 10px 14px;
+        font-size: 11px;
+    }
+
+    .blueprint-drawer {
+        padding: 12px;
+    }
+
+    .blueprint-list li {
+        font-size: 12px;
+        line-height: 1.45;
+    }
+
+    .project-links {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .project-links a {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 9px 12px;
+        background: rgba(33, 27, 45, 0.08);
+        border: 1px solid var(--ink);
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 700;
+    }
+
+    /* MANIFESTO */
+    .manifesto-inner {
+        padding: 55px 5%;
+        min-height: auto;
+    }
+
+    .manifesto h2 {
+        font-size: clamp(34px, 9.5vw, 60px) !important;
+        line-height: 1.14;
+        word-break: break-word;
+        margin-top: 24px;
+    }
+
+    .manifesto p {
+        position: static;
+        margin-top: 24px;
+        font-size: 13.5px;
+        transform: none;
+    }
+
+    .manifesto-spark {
+        font-size: 44px;
+        right: 4%;
+        top: 24px;
+    }
+
+    /* TIMELINE */
+    .job {
+        grid-template-columns: 1fr;
+        gap: 8px;
+        padding: 28px 0;
+    }
+
+    .job-head {
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .job-head h3 {
+        font-size: 22px;
+    }
+
+    .job-head p {
+        font-size: 14.5px;
+    }
+
+    .job-detail {
+        font-size: 15px;
+        line-height: 1.55;
+        margin: 10px 0 14px;
+    }
+
+    .job ul {
+        grid-template-columns: 1fr;
+        gap: 10px;
+        padding-left: 16px;
+    }
+
+    .job li {
+        font-size: 14px;
+        line-height: 1.55;
+    }
+
+    /* TOOLKIT SKILLS */
+    .skills-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .skill-card {
+        padding: 20px;
+        min-height: auto;
+    }
+
+    .skill-card h3 {
+        font-size: 19px;
+        margin: 18px 0 10px;
+    }
+
+    /* CREDENTIALS */
+    .credentials {
+        grid-template-columns: 1fr;
+        gap: 24px;
+    }
+
+    .award {
+        grid-template-columns: 28px 1fr 20px;
+        gap: 8px;
+        padding: 15px 0;
+    }
+
+    .education-card {
+        padding: 22px;
+        margin-top: 15px;
+    }
+
+    .education-card h3 {
+        font-size: 28px;
+    }
+
+    /* FOOTER */
+    .footer {
+        padding: 55px 5% 24px;
+    }
+
+    .footer-top {
+        min-height: auto;
+        padding-bottom: 30px;
+    }
+
+    .footer h2 {
+        font-size: clamp(40px, 12vw, 68px) !important;
+        margin-top: 20px;
+        line-height: 0.96;
+    }
+
+    .footer-star {
+        font-size: 42px;
+        right: 3%;
+        top: 12px;
+    }
+
+    .footer-button {
+        position: static;
+        margin-top: 28px;
+        width: 100%;
+        box-sizing: border-box;
+        justify-content: center;
+        padding: 15px 20px;
+    }
+
+    .footer-bottom {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 18px;
+    }
+
+    .contact-links {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        width: 100%;
+    }
+
+    .contact-links a {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 14px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 8px;
+        font-size: 12px;
+        color: #eee;
+        box-sizing: border-box;
+        width: 100%;
+    }
+}
+
+/* 4. Ultra-Compact Screens (< 380px, e.g. iPhone SE / Fold outer screen) */
+@media (max-width: 380px) {
+    .wordmark {
+        font-size: 16px;
+    }
+
+    .hero h1 {
+        font-size: clamp(34px, 11vw, 44px) !important;
+    }
+
+    .round-cta {
+        font-size: 11.5px;
+        padding: 11px 14px;
+    }
+
+    .hero-stamp {
+        width: 65px;
+        height: 65px;
+        font-size: 6.5px;
+    }
+}
+

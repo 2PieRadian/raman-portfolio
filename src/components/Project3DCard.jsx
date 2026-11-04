@@ -7,10 +7,12 @@ export default function Project3DCard({ project, index }) {
   const cardRef = useRef(null);
   const [tilt, setTilt] = useState({ rotateX: 0, rotateY: 0, glareX: 50, glareY: 50, opacity: 0 });
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
-  const [copiedLink, setCopiedLink] = useState(false);
 
   const handleMouseMove = (e) => {
+    // Disable 3D tilt calculations on mobile touch devices
+    if (window.matchMedia("(hover: none) or (pointer: coarse)").matches) return;
     if (!cardRef.current) return;
+
     const rect = cardRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
@@ -171,4 +173,3 @@ export default function Project3DCard({ project, index }) {
     </article>
   );
 }
-
