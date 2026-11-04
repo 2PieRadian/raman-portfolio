@@ -20,7 +20,7 @@ import {
   Sliders,
   ListMusic
 } from "lucide-react";
-import { extractAudioMetadata } from "../utils/audioMetadata";
+import { extractAudioMetadata, createFallbackCover } from "../utils/audioMetadata";
 
 // Default curated tracks with pre-extracted fallback covers from the audio files
 const DEFAULT_TRACKS = [
@@ -71,6 +71,7 @@ export default function MusicPlayer({ isDeckOpen, setIsDeckOpen, onPlayingStateC
 
   const audioRef = useRef(null);
   const fileInputRef = useRef(null);
+  const isTransitioningRef = useRef(false);
   const currentTrack = tracks[currentIndex] || tracks[0];
 
   // Notify parent of playing state (for header widget)
@@ -82,6 +83,14 @@ export default function MusicPlayer({ isDeckOpen, setIsDeckOpen, onPlayingStateC
       openDeck: () => setIsDeckOpen(true),
     });
   }, [isPlaying, currentIndex, currentTrack]);
+
+  // Initial load of the first track into the audio element
+  useEffect(() => {
+    if (audioRef.current && currentTrack) {
+      audioRef.current.src = currentTrack.audioSrc;
+      audioRef.current.preload = "auto";
+    }
+  }, []);
 
   // Extract embedded cover art directly from the FLAC audio file on mount
   useEffect(() => {
@@ -113,37 +122,78 @@ export default function MusicPlayer({ isDeckOpen, setIsDeckOpen, onPlayingStateC
     }
   }, [volume, isMuted]);
 
-  // Track switching handler
-  const playTrack = (index, shouldPlay = true) => {
-    const nextTrack = tracks[index];
+  // Robust track switching handler
+  const playTrackWithList = (index, trackList = tracks, shouldPlay = true) => {
+    const nextTrack = trackList[index];
+    if (!nextTrack || !audioRef.current) return;
+
     setCurrentIndex(index);
     setCurrentTime(0);
-    setIsPlaying(shouldPlay);
 
-    if (audioRef.current && nextTrack) {
-      // Update audio source directly for instant response
-      if (!audioRef.current.src.endsWith(nextTrack.audioSrc)) {
-        audioRef.current.src = nextTrack.audioSrc;
-      }
-      audioRef.current.currentTime = 0;
-      if (shouldPlay) {
-        audioRef.current
-          .play()
-          .then(() => setIsPlaying(true))
+    const audio = audioRef.current;
+    isTransitioningRef.current = true;
+
+    // Direct update to audio element without waiting for React re-render cycle
+    audio.pause();
+    audio.src = nextTrack.audioSrc;
+    audio.currentTime = 0;
+    audio.load();
+
+    if (shouldPlay) {
+      setIsPlaying(true);
+      const playPromise = audio.play();
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            isTransitioningRef.current = false;
+            setIsPlaying(true);
+          })
           .catch((err) => {
-            console.log("Audio playback:", err);
+            console.log("Audio buffering for immediate playback:", err?.name);
+            // Play immediately the exact millisecond enough data is buffered
+            const onCanPlay = () => {
+              audio.removeEventListener("canplay", onCanPlay);
+              audio
+                .play()
+                .then(() => {
+                  isTransitioningRef.current = false;
+                  setIsPlaying(true);
+                })
+                .catch((e) => {
+                  console.warn("Playback error on canplay:", e);
+                  isTransitioningRef.current = false;
+                });
+            };
+            audio.addEventListener("canplay", onCanPlay, { once: true });
           });
+      } else {
+        isTransitioningRef.current = false;
       }
+    } else {
+      setIsPlaying(false);
+      isTransitioningRef.current = false;
     }
   };
 
+  const playTrack = (index, shouldPlay = true) => {
+    playTrackWithList(index, tracks, shouldPlay);
+  };
+
   const togglePlay = () => {
-    if (!audioRef.current) return;
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    if (!audio.src && currentTrack) {
+      audio.src = currentTrack.audioSrc;
+      audio.load();
+    }
+
     if (isPlaying) {
-      audioRef.current.pause();
+      audio.pause();
       setIsPlaying(false);
     } else {
-      audioRef.current
+      setIsPlaying(true);
+      audio
         .play()
         .then(() => setIsPlaying(true))
         .catch((err) => {
@@ -154,16 +204,17 @@ export default function MusicPlayer({ isDeckOpen, setIsDeckOpen, onPlayingStateC
   };
 
   const handleNext = () => {
+    if (tracks.length === 0) return;
+    let nextIdx = (currentIndex + 1) % tracks.length;
     if (isShuffle && tracks.length > 1) {
-      let nextIdx = Math.floor(Math.random() * tracks.length);
-      while (nextIdx === currentIndex) {
-        nextIdx = Math.floor(Math.random() * tracks.length);
+      let randIdx = Math.floor(Math.random() * tracks.length);
+      while (randIdx === currentIndex) {
+        randIdx = Math.floor(Math.random() * tracks.length);
       }
-      playTrack(nextIdx, true);
-    } else {
-      const nextIdx = (currentIndex + 1) % tracks.length;
-      playTrack(nextIdx, true);
+      nextIdx = randIdx;
     }
+    // Immediately play the next song without pausing
+    playTrackWithList(nextIdx, tracks, true);
   };
 
   const handlePrev = () => {
@@ -174,7 +225,7 @@ export default function MusicPlayer({ isDeckOpen, setIsDeckOpen, onPlayingStateC
       return;
     }
     const prevIdx = (currentIndex - 1 + tracks.length) % tracks.length;
-    playTrack(prevIdx, true);
+    playTrackWithList(prevIdx, tracks, true);
   };
 
   const handleTimeUpdate = () => {
@@ -193,7 +244,7 @@ export default function MusicPlayer({ isDeckOpen, setIsDeckOpen, onPlayingStateC
     if (repeatMode === "one") {
       if (audioRef.current) {
         audioRef.current.currentTime = 0;
-        audioRef.current.play();
+        audioRef.current.play().catch(console.warn);
       }
     } else if (repeatMode === "all" || isShuffle) {
       handleNext();
@@ -225,37 +276,50 @@ export default function MusicPlayer({ isDeckOpen, setIsDeckOpen, onPlayingStateC
     else setRepeatMode("none");
   };
 
-  // Allow uploading a custom audio file (.flac / .mp3)
+  // Upload a custom audio file (.flac / .mp3 / .m4a / etc.)
   const handleFileUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     try {
       const audioUrl = URL.createObjectURL(file);
+      const cleanFileName = file.name.replace(/\.[^/.]+$/, "").replace(/[-_]+/g, " ");
+
+      // Extract embedded cover art and metadata from uploaded file
       const meta = await extractAudioMetadata(file, "");
 
+      const songTitle = meta.title?.trim() || cleanFileName;
+      const songArtist = meta.artist?.trim() || "Local Artist";
+      const songAlbum = meta.album?.trim() || "User Upload";
+
+      // ALWAYS remove the previous song's artwork!
+      // If embedded artwork found, use it; otherwise generate a clean fallback cover for THIS track.
+      const songCover = meta.coverUrl || createFallbackCover(songTitle, songArtist);
+
       const newTrack = {
-        id: `custom-${Date.now()}`,
-        title: meta.title || file.name.replace(/\.[^/.]+$/, ""),
-        artist: meta.artist || "Unknown Artist",
-        album: meta.album || "Local File",
-        date: "User Upload",
+        id: `custom-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+        title: songTitle,
+        artist: songArtist,
+        album: songAlbum,
+        date: meta.date || "User Upload",
         audioSrc: audioUrl,
-        fallbackCover: "",
-        coverUrl: meta.coverUrl || currentTrack.coverUrl,
+        fallbackCover: songCover,
+        coverUrl: songCover,
         accent: "lilac",
       };
 
-      setTracks((prev) => [...prev, newTrack]);
-      setCurrentIndex(tracks.length);
-      setIsPlaying(true);
-      setTimeout(() => {
-        if (audioRef.current) {
-          audioRef.current.play().catch(console.warn);
-        }
-      }, 50);
+      const newIndex = tracks.length;
+      const updatedTracks = [...tracks, newTrack];
+      setTracks(updatedTracks);
+
+      // Play the newly added song immediately!
+      playTrackWithList(newIndex, updatedTracks, true);
     } catch (err) {
       console.error("Error processing uploaded audio:", err);
+    } finally {
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
     }
   };
 
@@ -264,11 +328,16 @@ export default function MusicPlayer({ isDeckOpen, setIsDeckOpen, onPlayingStateC
       {/* Hidden native audio element */}
       <audio
         ref={audioRef}
-        src={currentTrack?.audioSrc}
+        preload="auto"
         onTimeUpdate={handleTimeUpdate}
         onLoadedMetadata={handleLoadedMetadata}
         onEnded={handleEnded}
-        preload="metadata"
+        onPlay={() => setIsPlaying(true)}
+        onPause={() => {
+          if (!isTransitioningRef.current) {
+            setIsPlaying(false);
+          }
+        }}
       />
 
       {/* FLOATING MUSIC CONTROLLER DOCK (Bottom Right) */}
