@@ -4647,6 +4647,35 @@ html.mobile-menu-open .nav.open {
         max-width: 100%;
         padding: 18px 16px;
     }
+
+    /* Compact deck: swap to independent static-animation waveform on mobile */
+    .deck-eq-desktop {
+        display: none !important;
+    }
+
+    .deck-eq-mobile {
+        display: flex !important;
+    }
+
+    /* Taller, full-width waveform for mobile compact deck */
+    .deck-waveform {
+        height: 22px !important;
+        margin: 6px 0 10px !important;
+        width: 100% !important;
+    }
+
+    .deck-eq-mobile {
+        gap: 2px !important;
+        width: 100% !important;
+    }
+
+    .deck-mobile-eq-bar {
+        height: 18px !important;
+        flex: 1 !important;
+        max-width: unset !important;
+        width: auto !important;
+        border-radius: 1px !important;
+    }
 }
 
 @media (max-width: 580px) {
