@@ -374,7 +374,7 @@ export default function MusicPlayer({ isDeckOpen, setIsDeckOpen, onPlayingStateC
 
       const analyser = ctx.createAnalyser();
       analyser.fftSize = 1024;
-      analyser.smoothingTimeConstant = 0.35;
+      analyser.smoothingTimeConstant = 0.82;
       analyser.minDecibels = -90;
       analyser.maxDecibels = -5;
       analyserRef.current = analyser;
@@ -426,7 +426,7 @@ export default function MusicPlayer({ isDeckOpen, setIsDeckOpen, onPlayingStateC
         rawBassSum += v;
       }
     }
-    const rawBass = rawBassPeak * 0.7 + (rawBassSum / 5) * 0.3;
+    const rawBass = rawBassPeak * 0.55 + (rawBassSum / 5) * 0.45;
 
     let rawMidSum = 0, rawMidPeak = 0, midCount = 0;
     if (data && currentlyPlaying) {
@@ -437,7 +437,7 @@ export default function MusicPlayer({ isDeckOpen, setIsDeckOpen, onPlayingStateC
         midCount++;
       }
     }
-    const rawMid = midCount > 0 ? rawMidPeak * 0.65 + (rawMidSum / midCount) * 0.35 : 0;
+    const rawMid = midCount > 0 ? rawMidPeak * 0.55 + (rawMidSum / midCount) * 0.45 : 0;
 
     let rawTrebleSum = 0, rawTreblePeak = 0, trebleCount = 0;
     if (data && currentlyPlaying) {
@@ -448,44 +448,45 @@ export default function MusicPlayer({ isDeckOpen, setIsDeckOpen, onPlayingStateC
         trebleCount++;
       }
     }
-    const rawTreble = trebleCount > 0 ? rawTreblePeak * 0.7 + (rawTrebleSum / trebleCount) * 0.3 : 0;
+    const rawTreble = trebleCount > 0 ? rawTreblePeak * 0.55 + (rawTrebleSum / trebleCount) * 0.45 : 0;
 
     // 2. Dynamic Normalization for 3 core musical bands:
-    // Adaptive tracking prevents saturation during dense walls of sound
+    // Stable Automatic Gain Control (AGC) - envelopes move smoothly over ~2 seconds
+    // Completely eliminates gain-pumping and flickering
     if (rawBass > bassCeilRef.current) {
-      bassCeilRef.current = Math.max(rawBass, bassCeilRef.current * 0.94 + rawBass * 0.06);
+      bassCeilRef.current = bassCeilRef.current * 0.98 + rawBass * 0.02;
     } else {
-      bassCeilRef.current = Math.max(50, bassCeilRef.current * 0.993);
+      bassCeilRef.current = Math.max(50, bassCeilRef.current * 0.998);
     }
-    bassFloorRef.current = Math.min(rawBass, bassFloorRef.current * 0.99 + rawBass * 0.01);
-    const bassHeadroom = Math.max(28, bassCeilRef.current - bassFloorRef.current);
+    bassFloorRef.current = bassFloorRef.current * 0.998 + rawBass * 0.002;
+    const bassHeadroom = Math.max(30, bassCeilRef.current - bassFloorRef.current);
     const normBass = currentlyPlaying ? Math.max(0, Math.min(1.0, (rawBass - bassFloorRef.current) / bassHeadroom)) : 0;
 
     if (rawMid > midCeilRef.current) {
-      midCeilRef.current = Math.max(rawMid, midCeilRef.current * 0.94 + rawMid * 0.06);
+      midCeilRef.current = midCeilRef.current * 0.98 + rawMid * 0.02;
     } else {
-      midCeilRef.current = Math.max(45, midCeilRef.current * 0.993);
+      midCeilRef.current = Math.max(45, midCeilRef.current * 0.998);
     }
-    midFloorRef.current = Math.min(rawMid, midFloorRef.current * 0.99 + rawMid * 0.01);
-    const midHeadroom = Math.max(24, midCeilRef.current - midFloorRef.current);
+    midFloorRef.current = midFloorRef.current * 0.998 + rawMid * 0.002;
+    const midHeadroom = Math.max(26, midCeilRef.current - midFloorRef.current);
     const normMid = currentlyPlaying ? Math.max(0, Math.min(1.0, (rawMid - midFloorRef.current) / midHeadroom)) : 0;
 
     if (rawTreble > trebleCeilRef.current) {
-      trebleCeilRef.current = Math.max(rawTreble, trebleCeilRef.current * 0.94 + rawTreble * 0.06);
+      trebleCeilRef.current = trebleCeilRef.current * 0.98 + rawTreble * 0.02;
     } else {
-      trebleCeilRef.current = Math.max(30, trebleCeilRef.current * 0.993);
+      trebleCeilRef.current = Math.max(35, trebleCeilRef.current * 0.998);
     }
-    trebleFloorRef.current = Math.min(rawTreble, trebleFloorRef.current * 0.99 + rawTreble * 0.01);
-    const trebleHeadroom = Math.max(18, trebleCeilRef.current - trebleFloorRef.current);
+    trebleFloorRef.current = trebleFloorRef.current * 0.998 + rawTreble * 0.002;
+    const trebleHeadroom = Math.max(20, trebleCeilRef.current - trebleFloorRef.current);
     const normTreble = currentlyPlaying ? Math.max(0, Math.min(1.0, (rawTreble - trebleFloorRef.current) / trebleHeadroom)) : 0;
 
-    // Asymmetric temporal smoothing for overall bands (fast attack 0.76, smooth decay 0.20)
-    const smoothBand = (curr, prev, attack = 0.76, decay = 0.20) => {
+    // Smooth temporal smoothing for overall bands (attack 0.35, decay 0.14)
+    const smoothBand = (curr, prev, attack = 0.35, decay = 0.14) => {
       return prev + (curr - prev) * (curr > prev ? attack : decay);
     };
-    bassLevelRef.current = smoothBand(normBass, bassLevelRef.current, 0.78, 0.20);
-    midLevelRef.current = smoothBand(normMid, midLevelRef.current, 0.72, 0.20);
-    trebleLevelRef.current = smoothBand(normTreble, trebleLevelRef.current, 0.76, 0.18);
+    bassLevelRef.current = smoothBand(normBass, bassLevelRef.current, 0.35, 0.14);
+    midLevelRef.current = smoothBand(normMid, midLevelRef.current, 0.30, 0.12);
+    trebleLevelRef.current = smoothBand(normTreble, trebleLevelRef.current, 0.32, 0.12);
 
     // 3. Mode 3: Studio Waveform (32 bars - real audio reactivity across frequency & amplitude)
     const studioBars = studioBarsRef.current;
@@ -508,46 +509,41 @@ export default function MusicPlayer({ isDeckOpen, setIsDeckOpen, onPlayingStateC
           }
         }
         const binCount = endBin - startBin + 1;
-        const rawBar = binCount > 1 ? barPeak * 0.65 + (barSum / binCount) * 0.35 : barPeak;
+        const rawBar = binCount > 1 ? barPeak * 0.55 + (barSum / binCount) * 0.45 : barPeak;
 
-        // Dynamic normalization per bar (adaptive floor & ceiling prevents freezing during loud passages)
+        // Stable AGC tracking per bar (slow envelope avoids frame-to-frame pumping)
         if (rawBar > studioCeils[i]) {
-          studioCeils[i] = Math.max(rawBar, studioCeils[i] * 0.92 + rawBar * 0.08);
+          studioCeils[i] = studioCeils[i] * 0.98 + rawBar * 0.02;
         } else {
-          studioCeils[i] = Math.max(35, studioCeils[i] * 0.992);
+          studioCeils[i] = Math.max(50, studioCeils[i] * 0.998);
         }
+        studioFloors[i] = studioFloors[i] * 0.998 + rawBar * 0.002;
 
-        if (rawBar < studioFloors[i]) {
-          studioFloors[i] = studioFloors[i] * 0.85 + rawBar * 0.15;
-        } else {
-          studioFloors[i] = studioFloors[i] * 0.996 + rawBar * 0.004;
-        }
-
-        const barHeadroom = Math.max(26, studioCeils[i] - studioFloors[i]);
+        const barHeadroom = Math.max(35, studioCeils[i] - studioFloors[i]);
         let barNorm = currentlyPlaying
           ? Math.max(0, Math.min(1.0, (rawBar - studioFloors[i]) / barHeadroom))
           : 0;
 
-        // Acoustic equal-loudness tilt (gives treble instruments and transients active motion)
+        // Acoustic equal-loudness tilt across musical registers
         const acousticWeight = 1.0 + Math.pow(i / 31, 0.6) * 0.45;
         barNorm = Math.min(1.0, barNorm * acousticWeight);
 
-        // Nonlinear scaling: perceptual curve (gamma = 1.25)
+        // Perceptual gamma curve
         const perceptualVal = Math.pow(barNorm, 1.25);
 
-        // Temporal smoothing: fast attack (0.76) for transients, gentle decay (0.20)
+        // Silky smooth temporal interpolation:
+        // Attack (0.32) responds punchily to musical transients, decay (0.12) glides smoothly down
         const prev = studioLevelsRef.current[i] || 0;
-        const smoothed = prev + (perceptualVal - prev) * (perceptualVal > prev ? 0.76 : 0.20);
+        const smoothed = prev + (perceptualVal - prev) * (perceptualVal > prev ? 0.32 : 0.12);
         studioLevelsRef.current[i] = smoothed;
 
-        // Live amplitude & frequency scaling:
-        // Dynamic scaling without artificial clamping - reacts organically to audio power
+        // Dynamic scaling without artificial clamping
         const minScale = 0.22;
         const scale = currentlyPlaying
           ? minScale + smoothed * 1.85
           : minScale;
         bar.style.transform = `scaleY(${scale.toFixed(3)})`;
-        bar.style.opacity = currentlyPlaying ? (0.75 + smoothed * 0.25).toFixed(2) : "0.5";
+        bar.style.opacity = currentlyPlaying ? "1" : "0.5";
       }
     }
 
@@ -572,21 +568,16 @@ export default function MusicPlayer({ isDeckOpen, setIsDeckOpen, onPlayingStateC
           }
         }
         const binCount = endBin - startBin + 1;
-        const rawBar = binCount > 1 ? barPeak * 0.65 + (barSum / binCount) * 0.35 : barPeak;
+        const rawBar = binCount > 1 ? barPeak * 0.55 + (barSum / binCount) * 0.45 : barPeak;
 
         if (rawBar > cCeils[i]) {
-          cCeils[i] = Math.max(rawBar, cCeils[i] * 0.92 + rawBar * 0.08);
+          cCeils[i] = cCeils[i] * 0.98 + rawBar * 0.02;
         } else {
-          cCeils[i] = Math.max(35, cCeils[i] * 0.992);
+          cCeils[i] = Math.max(50, cCeils[i] * 0.998);
         }
+        cFloors[i] = cFloors[i] * 0.998 + rawBar * 0.002;
 
-        if (rawBar < cFloors[i]) {
-          cFloors[i] = cFloors[i] * 0.85 + rawBar * 0.15;
-        } else {
-          cFloors[i] = cFloors[i] * 0.996 + rawBar * 0.004;
-        }
-
-        const barHeadroom = Math.max(26, cCeils[i] - cFloors[i]);
+        const barHeadroom = Math.max(35, cCeils[i] - cFloors[i]);
         let barNorm = currentlyPlaying
           ? Math.max(0, Math.min(1.0, (rawBar - cFloors[i]) / barHeadroom))
           : 0;
@@ -597,11 +588,10 @@ export default function MusicPlayer({ isDeckOpen, setIsDeckOpen, onPlayingStateC
         const perceptualVal = Math.pow(barNorm, 1.25);
 
         const prev = compactLevelsRef.current[i] || 0;
-        const smoothed = prev + (perceptualVal - prev) * (perceptualVal > prev ? 0.76 : 0.20);
+        const smoothed = prev + (perceptualVal - prev) * (perceptualVal > prev ? 0.32 : 0.12);
         compactLevelsRef.current[i] = smoothed;
 
-        // In compact mode: base height is 8px.
-        // Resting scale: 0.22. Active scaling reaches ~0.70 max to stay contained within 10px container
+        // In compact mode: base height is 8px. Contained within 10px container
         const minScale = 0.22;
         const scale = currentlyPlaying ? minScale + smoothed * 0.48 : minScale;
         bar.style.transform = `scaleY(${scale.toFixed(3)})`;
@@ -609,18 +599,14 @@ export default function MusicPlayer({ isDeckOpen, setIsDeckOpen, onPlayingStateC
     }
 
     // 5. Multiple Reactive Properties:
-    // Studio Wave Container width breathing (Bass) & Coral Glow shimmer (Treble)
+    // Studio Wave Container width breathing (Bass)
     const studioWaveContainer = studioWaveContainerRef.current;
     if (studioWaveContainer) {
       if (currentlyPlaying) {
-        const widthScale = (1.0 + bassLevelRef.current * 0.038).toFixed(3);
-        const glowSpread = (3 + trebleLevelRef.current * 10).toFixed(1);
-        const glowAlpha = (0.2 + trebleLevelRef.current * 0.45).toFixed(2);
+        const widthScale = (1.0 + bassLevelRef.current * 0.03).toFixed(3);
         studioWaveContainer.style.transform = `scaleX(${widthScale})`;
-        studioWaveContainer.style.filter = `drop-shadow(0 0 ${glowSpread}px rgba(255, 99, 88, ${glowAlpha}))`;
       } else {
         studioWaveContainer.style.transform = "none";
-        studioWaveContainer.style.filter = "none";
       }
     }
 
@@ -628,21 +614,10 @@ export default function MusicPlayer({ isDeckOpen, setIsDeckOpen, onPlayingStateC
     const vinylDisc = studioVinylDiscRef.current;
     if (vinylDisc) {
       if (currentlyPlaying) {
-        const vinylScale = (1.0 + bassLevelRef.current * 0.022).toFixed(3);
+        const vinylScale = (1.0 + bassLevelRef.current * 0.018).toFixed(3);
         vinylDisc.style.transform = `scale(${vinylScale})`;
       } else {
         vinylDisc.style.transform = "none";
-      }
-    }
-
-    // Compact Wave Container Treble glow
-    const compactWaveContainer = compactWaveContainerRef.current;
-    if (compactWaveContainer) {
-      if (currentlyPlaying) {
-        const glowSpread = (2 + trebleLevelRef.current * 6).toFixed(1);
-        compactWaveContainer.style.filter = `drop-shadow(0 0 ${glowSpread}px rgba(255, 99, 88, 0.35))`;
-      } else {
-        compactWaveContainer.style.filter = "none";
       }
     }
 
@@ -661,7 +636,7 @@ export default function MusicPlayer({ isDeckOpen, setIsDeckOpen, onPlayingStateC
         if (!bar) continue;
         const target = bands[i];
         const prev = miniLevelsRef.current[i] || 0;
-        const smoothed = prev + (target - prev) * (target > prev ? 0.74 : 0.20);
+        const smoothed = prev + (target - prev) * (target > prev ? 0.32 : 0.12);
         miniLevelsRef.current[i] = smoothed;
 
         const h = currentlyPlaying ? Math.max(3, Math.min(16, Math.round(3 + smoothed * 13))) : 3;
@@ -679,7 +654,7 @@ export default function MusicPlayer({ isDeckOpen, setIsDeckOpen, onPlayingStateC
         if (!bar) continue;
         const target = pwBands[i];
         const prev = playlistLevelsRef.current[i] || 0;
-        const smoothed = prev + (target - prev) * (target > prev ? 0.74 : 0.20);
+        const smoothed = prev + (target - prev) * (target > prev ? 0.32 : 0.12);
         playlistLevelsRef.current[i] = smoothed;
 
         const h = currentlyPlaying ? Math.max(3, Math.min(14, Math.round(3 + smoothed * 11))) : 4;
@@ -708,26 +683,66 @@ export default function MusicPlayer({ isDeckOpen, setIsDeckOpen, onPlayingStateC
     }
   };
 
-  // Unlock AudioContext on first user interaction anywhere
+  // Play the first music track by default when website loads
   useEffect(() => {
-    const handleFirstGesture = () => {
+    let unmounted = false;
+
+    const startDefaultPlayback = () => {
+      const audio = audioRef.current;
+      if (!audio) return;
+
       initAudioAnalyser();
       if (audioContextRef.current && audioContextRef.current.state === "suspended") {
         audioContextRef.current.resume().catch(() => { });
       }
-      window.removeEventListener("pointerdown", handleFirstGesture);
-      window.removeEventListener("keydown", handleFirstGesture);
+
+      const playPromise = audio.play();
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            if (!unmounted) {
+              setIsPlaying(true);
+            }
+          })
+          .catch((err) => {
+            console.log("Autoplay waiting for user gesture:", err?.name);
+            // If browser autoplay policy blocks audio before user interaction,
+            // immediately start on the very first gesture (click, tap, scroll, keypress)
+            const handleFirstGesture = () => {
+              if (unmounted) return;
+              initAudioAnalyser();
+              if (audioContextRef.current && audioContextRef.current.state === "suspended") {
+                audioContextRef.current.resume().catch(() => { });
+              }
+              const p = audio.play();
+              if (p !== undefined) {
+                p.then(() => {
+                  if (!unmounted) setIsPlaying(true);
+                }).catch(() => { });
+              }
+              cleanupGesture();
+            };
+
+            const cleanupGesture = () => {
+              window.removeEventListener("pointerdown", handleFirstGesture);
+              window.removeEventListener("touchstart", handleFirstGesture);
+              window.removeEventListener("keydown", handleFirstGesture);
+              window.removeEventListener("scroll", handleFirstGesture);
+            };
+
+            window.addEventListener("pointerdown", handleFirstGesture, { passive: true, once: true });
+            window.addEventListener("touchstart", handleFirstGesture, { passive: true, once: true });
+            window.addEventListener("keydown", handleFirstGesture, { passive: true, once: true });
+            window.addEventListener("scroll", handleFirstGesture, { passive: true, once: true });
+          });
+      }
     };
 
-    window.addEventListener("pointerdown", handleFirstGesture, { passive: true });
-    window.addEventListener("keydown", handleFirstGesture, { passive: true });
+    const timer = setTimeout(startDefaultPlayback, 120);
 
     return () => {
-      window.removeEventListener("pointerdown", handleFirstGesture);
-      window.removeEventListener("keydown", handleFirstGesture);
-      if (animFrameRef.current) {
-        cancelAnimationFrame(animFrameRef.current);
-      }
+      unmounted = true;
+      clearTimeout(timer);
     };
   }, []);
 
@@ -1074,7 +1089,8 @@ export default function MusicPlayer({ isDeckOpen, setIsDeckOpen, onPlayingStateC
       <audio
         ref={audioRef}
         src={currentTrack.audioSrc}
-        preload="metadata"
+        preload="auto"
+        autoPlay
         crossOrigin="anonymous"
         onTimeUpdate={handleTimeUpdate}
         onLoadedMetadata={handleLoadedMetadata}

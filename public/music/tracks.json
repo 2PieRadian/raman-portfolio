@@ -11,6 +11,28 @@
     "format": "WAV 16-BIT"
   },
   {
+    "id": "sunny-canvas",
+    "fileName": "Sunny Canvas.wav",
+    "title": "Sunny Canvas",
+    "artist": "Original Soundtrack",
+    "album": "SUNNY CANVAS · SOUNDTRACK",
+    "date": "2026",
+    "audioSrc": "/music/Sunny%20Canvas.wav",
+    "accent": "coral",
+    "format": "WAV 16-BIT"
+  },
+  {
+    "id": "timber-pulse",
+    "fileName": "Timber Pulse.wav",
+    "title": "Timber Pulse",
+    "artist": "Original Soundtrack",
+    "album": "TIMBER PULSE · SOUNDTRACK",
+    "date": "2026",
+    "audioSrc": "/music/Timber%20Pulse.wav",
+    "accent": "lilac",
+    "format": "WAV 16-BIT"
+  },
+  {
     "id": "turning-pages",
     "fileName": "Turning Pages.wav",
     "title": "Turning Pages",
@@ -18,6 +40,17 @@
     "album": "TURNING PAGES · SOUNDTRACK",
     "date": "2026",
     "audioSrc": "/music/Turning%20Pages.wav",
+    "accent": "lime",
+    "format": "WAV 16-BIT"
+  },
+  {
+    "id": "velvet-drift",
+    "fileName": "Velvet Drift.wav",
+    "title": "Velvet Drift",
+    "artist": "Original Soundtrack",
+    "album": "VELVET DRIFT · SOUNDTRACK",
+    "date": "2026",
+    "audioSrc": "/music/Velvet%20Drift.wav",
     "accent": "coral",
     "format": "WAV 16-BIT"
   }

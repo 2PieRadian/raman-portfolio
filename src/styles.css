@@ -2329,8 +2329,6 @@ html.mobile-menu-open .nav.open {
     display: flex;
     align-items: center;
     margin: 4px 0 8px;
-    transition: filter 0.08s ease-out;
-    will-change: filter;
 }
 
 .deck-eq-bars {
@@ -2348,7 +2346,7 @@ html.mobile-menu-open .nav.open {
     border-radius: 1px;
     transform-origin: center;
     transform: scaleY(0.25);
-    transition: background .2s, transform .04s ease-out;
+    transition: background .2s;
     will-change: transform;
 }
 
@@ -3625,8 +3623,12 @@ html.mobile-menu-open .nav.open {
     height: 56px;
     margin: 8px 0 16px;
     overflow: visible;
-    transition: filter 0.08s ease-out, transform 0.06s ease-out;
-    will-change: transform, filter;
+    transition: transform 0.12s ease-out;
+    will-change: transform;
+}
+
+.studio-wave-container.playing {
+    filter: drop-shadow(0 0 10px rgba(255, 99, 88, 0.45));
 }
 
 .studio-wave-bar {
@@ -3636,7 +3638,7 @@ html.mobile-menu-open .nav.open {
     transform-origin: center;
     height: var(--bar-h, 16px);
     transform: scaleY(0.22);
-    transition: transform 0.04s ease-out, opacity 0.06s ease-out;
+    transition: opacity 0.25s ease;
     will-change: transform;
 }
 
