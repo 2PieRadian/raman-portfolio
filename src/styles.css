@@ -3680,6 +3680,16 @@ html.mobile-menu-open .nav.open {
     border-radius: 999px;
     position: relative;
     cursor: pointer;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.studio-timeline-rail::before {
+    content: "";
+    position: absolute;
+    inset: -14px 0;
+    cursor: pointer;
 }
 
 .studio-timeline-progress {
@@ -3700,7 +3710,18 @@ html.mobile-menu-open .nav.open {
     box-shadow: 1.5px 1.5px 0 var(--ink);
     transform: translate(-50%, -50%);
     pointer-events: none;
-    transition: left 0.08s linear;
+    transition: left 0.08s linear, transform 0.15s ease;
+}
+
+.studio-timeline-rail:hover .studio-timeline-thumb,
+.studio-timeline-rail.dragging .studio-timeline-thumb {
+    transform: translate(-50%, -50%) scale(1.25);
+    box-shadow: 2px 2px 0 var(--ink);
+}
+
+.studio-timeline-rail.dragging .studio-timeline-progress,
+.studio-timeline-rail.dragging .studio-timeline-thumb {
+    transition: none !important;
 }
 
 /* Playback Controls Row */

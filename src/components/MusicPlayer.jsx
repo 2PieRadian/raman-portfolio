@@ -164,6 +164,7 @@ export default function MusicPlayer({ isDeckOpen, setIsDeckOpen, onPlayingStateC
   const studioWaveContainerRef = useRef(null);
   const studioVinylDiscRef = useRef(null);
   const compactWaveContainerRef = useRef(null);
+  const studioRailRef = useRef(null);
 
   // Exponentially smoothed amplitude levels for organic wave physics
   const studioLevelsRef = useRef(new Float32Array(32));
@@ -1069,14 +1070,68 @@ export default function MusicPlayer({ isDeckOpen, setIsDeckOpen, onPlayingStateC
     setIsDraggingSeek(false);
   };
 
-  const handleScrubberClick = (e) => {
+  const handleScrubberPointerDown = (e) => {
     if (!audioRef.current || !duration) return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    const clickX = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
-    const newTime = (clickX / rect.width) * duration;
-    setCurrentTime(newTime);
-    audioRef.current.currentTime = newTime;
-    sfx.playSnap();
+    if (e.button !== undefined && e.button !== 0) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    const rail = studioRailRef.current || e.currentTarget;
+    if (!rail) return;
+
+    setIsDraggingSeek(true);
+
+    const calcTimeFromEvent = (clientX) => {
+      const rect = rail.getBoundingClientRect();
+      if (rect.width <= 0) return 0;
+      const clickX = Math.max(0, Math.min(clientX - rect.left, rect.width));
+      return (clickX / rect.width) * duration;
+    };
+
+    const initialTime = calcTimeFromEvent(e.clientX);
+    setCurrentTime(initialTime);
+
+    let latestTime = initialTime;
+
+    const onPointerMove = (moveEvent) => {
+      moveEvent.preventDefault();
+      const newTime = calcTimeFromEvent(moveEvent.clientX);
+      latestTime = newTime;
+      setCurrentTime(newTime);
+    };
+
+    const onPointerUp = (upEvent) => {
+      if (upEvent) upEvent.preventDefault();
+      setIsDraggingSeek(false);
+      if (audioRef.current) {
+        audioRef.current.currentTime = latestTime;
+      }
+      sfx.playSnap();
+      window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("pointerup", onPointerUp);
+      window.removeEventListener("pointercancel", onPointerUp);
+    };
+
+    window.addEventListener("pointermove", onPointerMove, { passive: false });
+    window.addEventListener("pointerup", onPointerUp);
+    window.addEventListener("pointercancel", onPointerUp);
+  };
+
+  const handleScrubberKeyDown = (e) => {
+    if (!audioRef.current || !duration) return;
+    let seekDelta = 0;
+    if (e.key === "ArrowRight" || e.key === "ArrowUp") {
+      seekDelta = 5;
+    } else if (e.key === "ArrowLeft" || e.key === "ArrowDown") {
+      seekDelta = -5;
+    }
+    if (seekDelta !== 0) {
+      e.preventDefault();
+      const newTime = Math.max(0, Math.min(duration, currentTime + seekDelta));
+      setCurrentTime(newTime);
+      audioRef.current.currentTime = newTime;
+    }
   };
 
   const toggleMute = () => {
@@ -1797,9 +1852,12 @@ export default function MusicPlayer({ isDeckOpen, setIsDeckOpen, onPlayingStateC
                 <div className="studio-scrubber-row">
                   <span className="studio-time-text">{formatTime(currentTime)}</span>
                   <div
-                    className="studio-timeline-rail"
-                    onClick={handleScrubberClick}
+                    ref={studioRailRef}
+                    className={`studio-timeline-rail ${isDraggingSeek ? "dragging" : ""}`}
+                    onPointerDown={handleScrubberPointerDown}
+                    onKeyDown={handleScrubberKeyDown}
                     role="slider"
+                    aria-label="Track timeline scrubber"
                     aria-valuenow={currentTime}
                     aria-valuemin={0}
                     aria-valuemax={duration || 1}
