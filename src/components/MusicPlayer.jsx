@@ -683,66 +683,89 @@ export default function MusicPlayer({ isDeckOpen, setIsDeckOpen, onPlayingStateC
     }
   };
 
-  // Play the first music track by default when website loads
+  // Autoplay the first music track by default when website loads
   useEffect(() => {
     let unmounted = false;
+    let cleanupListeners = null;
 
-    const startDefaultPlayback = () => {
+    const tryStartPlayback = () => {
       const audio = audioRef.current;
       if (!audio) return;
 
-      initAudioAnalyser();
-      if (audioContextRef.current && audioContextRef.current.state === "suspended") {
-        audioContextRef.current.resume().catch(() => { });
-      }
+      const triggerPlay = () => {
+        initAudioAnalyser();
+        if (audioContextRef.current && audioContextRef.current.state === "suspended") {
+          audioContextRef.current.resume().catch(() => { });
+        }
 
-      const playPromise = audio.play();
-      if (playPromise !== undefined) {
-        playPromise
-          .then(() => {
+        const p = audio.play();
+        if (p !== undefined) {
+          p.then(() => {
             if (!unmounted) {
               setIsPlaying(true);
             }
-          })
-          .catch((err) => {
-            console.log("Autoplay waiting for user gesture:", err?.name);
-            // If browser autoplay policy blocks audio before user interaction,
-            // immediately start on the very first gesture (click, tap, scroll, keypress)
-            const handleFirstGesture = () => {
+          }).catch((err) => {
+            console.log("Unmuted autoplay restricted by browser policy; awaiting user activation:", err?.name);
+
+            // On the first interaction anywhere on the document (that is not clicking a player button directly),
+            // start playback automatically!
+            const handleFirstGesture = (e) => {
               if (unmounted) return;
+              // If user clicked inside player controls, let the button's own click handler run
+              if (e.target && e.target.closest && e.target.closest(".music-dock, .studio-deck-overlay, .deck-play-btn, .studio-play-btn")) {
+                removeListeners();
+                return;
+              }
+
               initAudioAnalyser();
               if (audioContextRef.current && audioContextRef.current.state === "suspended") {
                 audioContextRef.current.resume().catch(() => { });
               }
-              const p = audio.play();
-              if (p !== undefined) {
-                p.then(() => {
+
+              const resumePromise = audio.play();
+              if (resumePromise !== undefined) {
+                resumePromise.then(() => {
                   if (!unmounted) setIsPlaying(true);
                 }).catch(() => { });
               }
-              cleanupGesture();
+              removeListeners();
             };
 
-            const cleanupGesture = () => {
-              window.removeEventListener("pointerdown", handleFirstGesture);
-              window.removeEventListener("touchstart", handleFirstGesture);
-              window.removeEventListener("keydown", handleFirstGesture);
-              window.removeEventListener("scroll", handleFirstGesture);
+            const removeListeners = () => {
+              document.removeEventListener("click", handleFirstGesture, true);
+              document.removeEventListener("pointerdown", handleFirstGesture, true);
+              document.removeEventListener("touchstart", handleFirstGesture, true);
+              document.removeEventListener("keydown", handleFirstGesture, true);
             };
 
-            window.addEventListener("pointerdown", handleFirstGesture, { passive: true, once: true });
-            window.addEventListener("touchstart", handleFirstGesture, { passive: true, once: true });
-            window.addEventListener("keydown", handleFirstGesture, { passive: true, once: true });
-            window.addEventListener("scroll", handleFirstGesture, { passive: true, once: true });
+            cleanupListeners = removeListeners;
+
+            document.addEventListener("click", handleFirstGesture, { capture: true, once: true });
+            document.addEventListener("pointerdown", handleFirstGesture, { capture: true, once: true });
+            document.addEventListener("touchstart", handleFirstGesture, { capture: true, once: true });
+            document.addEventListener("keydown", handleFirstGesture, { capture: true, once: true });
           });
+        }
+      };
+
+      if (audio.readyState >= 2) {
+        triggerPlay();
+      } else {
+        const onCanPlay = () => {
+          audio.removeEventListener("canplay", onCanPlay);
+          triggerPlay();
+        };
+        audio.addEventListener("canplay", onCanPlay, { once: true });
+        audio.load();
       }
     };
 
-    const timer = setTimeout(startDefaultPlayback, 120);
+    const timer = setTimeout(tryStartPlayback, 80);
 
     return () => {
       unmounted = true;
       clearTimeout(timer);
+      if (cleanupListeners) cleanupListeners();
     };
   }, []);
 
