@@ -130,6 +130,14 @@ export default function MusicPlayer({ isDeckOpen, setIsDeckOpen, onPlayingStateC
       if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
 
       if (e.key === "Escape") {
+        if (showPlaylist) {
+          setShowPlaylist(false);
+          return;
+        }
+        if (isStudioPlaylistOpen && typeof window !== "undefined" && window.innerWidth <= 900) {
+          setIsStudioPlaylistOpen(false);
+          return;
+        }
         if (isFullScreen) {
           setIsFullScreen(false);
         } else if (isDeckOpen) {
@@ -155,7 +163,7 @@ export default function MusicPlayer({ isDeckOpen, setIsDeckOpen, onPlayingStateC
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isFullScreen, isDeckOpen, isPlaying, currentIndex, tracks, isShuffle]);
+  }, [isFullScreen, isDeckOpen, isPlaying, currentIndex, tracks, isShuffle, showPlaylist, isStudioPlaylistOpen]);
 
   // Notify parent of playing state (for header widget & command palette)
   useEffect(() => {
@@ -1166,89 +1174,112 @@ export default function MusicPlayer({ isDeckOpen, setIsDeckOpen, onPlayingStateC
                 </div>
               </div>
 
-              {/* Right Sidebar: Playlist (Hideable, closed by default) */}
+              {/* Right Sidebar: Playlist (Desktop side panel / Mobile bottom-sheet modal) */}
               {isStudioPlaylistOpen && (
-                <aside className="studio-stage-right-sidebar" data-lenis-prevent="true">
-                  <div className="sidebar-top-section">
-                    <div className="sidebar-header-row">
-                      <div className="sidebar-header-left">
-                        <h3 className="sidebar-heading">Playlist</h3>
-                        <span className="sidebar-tracks-badge">
-                          {tracks.length < 10 ? `0${tracks.length}` : tracks.length} TRACKS
-                        </span>
+                <>
+                  {/* Mobile backdrop to dim stage and close on tap */}
+                  <div
+                    className="studio-playlist-mobile-backdrop"
+                    onClick={() => {
+                      sfx.playSnap();
+                      setIsStudioPlaylistOpen(false);
+                    }}
+                    aria-hidden="true"
+                  />
+
+                  <aside className="studio-stage-right-sidebar" data-lenis-prevent="true">
+                    {/* Mobile drag handle */}
+                    <div
+                      className="studio-sheet-drag-handle"
+                      onClick={() => {
+                        sfx.playSnap();
+                        setIsStudioPlaylistOpen(false);
+                      }}
+                      title="Tap to close"
+                      aria-label="Close playlist"
+                    />
+
+                    <div className="sidebar-top-section">
+                      <div className="sidebar-header-row">
+                        <div className="sidebar-header-left">
+                          <h3 className="sidebar-heading">Playlist</h3>
+                          <span className="sidebar-tracks-badge">
+                            {tracks.length < 10 ? `0${tracks.length}` : tracks.length} TRACKS
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          className="sidebar-close-btn"
+                          onClick={() => {
+                            sfx.playSnap();
+                            setIsStudioPlaylistOpen(false);
+                          }}
+                          title="Close Playlist"
+                          aria-label="Close Playlist"
+                        >
+                          <X size={15} />
+                        </button>
                       </div>
-                      <button
-                        type="button"
-                        className="sidebar-close-btn"
-                        onClick={() => {
-                          sfx.playSnap();
-                          setIsStudioPlaylistOpen(false);
-                        }}
-                        title="Close Playlist"
-                        aria-label="Close Playlist"
-                      >
-                        <X size={15} />
-                      </button>
-                    </div>
 
-                    <div className="sidebar-items-list" data-lenis-prevent="true">
-                      {tracks.map((t, idx) => {
-                        const isActive = idx === currentIndex;
-                        return (
-                          <div
-                            key={t.id}
-                            className={`sidebar-track-item ${isActive ? "active" : ""}`}
-                            onClick={() => playTrack(idx, true)}
-                            role="button"
-                            tabIndex={0}
-                          >
-                            {isActive ? (
-                              <div className="sidebar-item-wave-icon playing" aria-hidden="true">
-                                <span className="si-bar" />
-                                <span className="si-bar" style={{ animationDelay: "0.2s" }} />
-                                <span className="si-bar" style={{ animationDelay: "0.4s" }} />
+                      <div className="sidebar-items-list" data-lenis-prevent="true">
+                        {tracks.map((t, idx) => {
+                          const isActive = idx === currentIndex;
+                          return (
+                            <div
+                              key={t.id}
+                              className={`sidebar-track-item ${isActive ? "active" : ""}`}
+                              onClick={() => playTrack(idx, true)}
+                              role="button"
+                              tabIndex={0}
+                            >
+                              {isActive ? (
+                                <div className="sidebar-item-wave-icon playing" aria-hidden="true">
+                                  <span className="si-bar" />
+                                  <span className="si-bar" style={{ animationDelay: "0.2s" }} />
+                                  <span className="si-bar" style={{ animationDelay: "0.4s" }} />
+                                </div>
+                              ) : (
+                                <span className="sidebar-track-num">
+                                  {idx + 1 < 10 ? `0${idx + 1}` : idx + 1}
+                                </span>
+                              )}
+
+                              <img
+                                src={t.coverUrl}
+                                alt={t.title}
+                                draggable={false}
+                                className="sidebar-track-thumb-img"
+                              />
+
+                              <div className="sidebar-track-text">
+                                <strong>
+                                  0{idx + 1} {t.title}
+                                </strong>
+                                <span>{t.artist}</span>
                               </div>
-                            ) : (
-                              <span className="sidebar-track-num">
-                                {idx + 1 < 10 ? `0${idx + 1}` : idx + 1}
-                              </span>
-                            )}
 
-                            <img
-                              src={t.coverUrl}
-                              alt={t.title}
-                              draggable={false}
-                              className="sidebar-track-thumb-img"
-                            />
-
-                            <div className="sidebar-track-text">
-                              <strong>
-                                0{idx + 1} {t.title}
-                              </strong>
-                              <span>{t.artist}</span>
+                              {isActive ? (
+                                <span className="sidebar-track-status-pill">PLAYING</span>
+                              ) : (
+                                <button
+                                  type="button"
+                                  className="sidebar-more-dots"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    playTrack(idx, true);
+                                  }}
+                                  aria-label="Play track"
+                                >
+                                  ···
+                                </button>
+                              )}
                             </div>
-
-                            {isActive ? (
-                              <span className="sidebar-track-status-pill">PLAYING</span>
-                            ) : (
-                              <button
-                                type="button"
-                                className="sidebar-more-dots"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  playTrack(idx, true);
-                                }}
-                                aria-label="Play track"
-                              >
-                                ···
-                              </button>
-                            )}
-                          </div>
-                        );
-                      })}
+                          );
+                        })}
+                      </div>
                     </div>
-                  </div>
-                </aside>
+                  </aside>
+                </>
               )}
             </div>
           </div>
