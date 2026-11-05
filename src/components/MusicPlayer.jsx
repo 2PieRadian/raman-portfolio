@@ -97,9 +97,32 @@ function formatTime(seconds) {
   return `${mins}:${secs < 10 ? "0" : ""}${secs}`;
 }
 
+// Find "Velvet Drift.wav" first; fallback to index 0 if not found
+function findTargetTrackIndex(list, targetName = "Velvet Drift.wav") {
+  if (!Array.isArray(list) || list.length === 0) return 0;
+  const foundIdx = list.findIndex((t) => {
+    if (!t) return false;
+    const fn = (t.fileName || "").toLowerCase();
+    const title = (t.title || "").toLowerCase();
+    const id = (t.id || "").toLowerCase();
+    const src = (t.audioSrc || "").toLowerCase();
+
+    return (
+      fn === "velvet drift.wav" ||
+      fn.includes("velvet drift") ||
+      title === "velvet drift" ||
+      id === "velvet-drift" ||
+      src.includes("velvet%20drift") ||
+      src.includes("velvet drift")
+    );
+  });
+
+  return foundIdx !== -1 ? foundIdx : 0;
+}
+
 export default function MusicPlayer({ isDeckOpen, setIsDeckOpen, onPlayingStateChange }) {
   const [tracks, setTracks] = useState(DEFAULT_TRACKS);
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [currentIndex, setCurrentIndex] = useState(() => findTargetTrackIndex(DEFAULT_TRACKS));
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -692,6 +715,13 @@ export default function MusicPlayer({ isDeckOpen, setIsDeckOpen, onPlayingStateC
       const audio = audioRef.current;
       if (!audio) return;
 
+      const targetTrack = tracks[currentIndex] || tracks[0];
+      if (targetTrack && targetTrack.audioSrc) {
+        if (!audio.src || !audio.src.includes(encodeURI(targetTrack.fileName || ""))) {
+          audio.src = targetTrack.audioSrc;
+        }
+      }
+
       const triggerPlay = () => {
         initAudioAnalyser();
         if (audioContextRef.current && audioContextRef.current.state === "suspended") {
@@ -828,6 +858,7 @@ export default function MusicPlayer({ isDeckOpen, setIsDeckOpen, onPlayingStateC
             activeList = json.map(normalizeFolderTrack);
             if (isMounted) {
               setTracks(activeList);
+              setCurrentIndex(findTargetTrackIndex(activeList));
             }
           }
         }
