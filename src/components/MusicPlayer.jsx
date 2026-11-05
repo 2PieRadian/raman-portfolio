@@ -75,7 +75,12 @@ export default function MusicPlayer({ isDeckOpen, setIsDeckOpen, onPlayingStateC
   const [repeatMode, setRepeatMode] = useState("all"); // 'none' | 'all' | 'one'
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [showPlaylist, setShowPlaylist] = useState(false);
-  const [isStudioPlaylistOpen, setIsStudioPlaylistOpen] = useState(false);
+  const [isStudioPlaylistOpen, setIsStudioPlaylistOpen] = useState(() => {
+    if (typeof window !== "undefined") {
+      return window.innerWidth > 990;
+    }
+    return true;
+  });
   const [isHovered, setIsHovered] = useState(false);
   const [isDraggingSeek, setIsDraggingSeek] = useState(false);
 
@@ -101,6 +106,13 @@ export default function MusicPlayer({ isDeckOpen, setIsDeckOpen, onPlayingStateC
     return () => {
       document.body.style.overflow = originalOverflow;
     };
+  }, [isFullScreen]);
+
+  // When expanding to full Studio Deck (Mode 3), open playlist by default on desktop
+  useEffect(() => {
+    if (isFullScreen && typeof window !== "undefined") {
+      setIsStudioPlaylistOpen(window.innerWidth > 990);
+    }
   }, [isFullScreen]);
 
   // Global keyboard shortcuts
