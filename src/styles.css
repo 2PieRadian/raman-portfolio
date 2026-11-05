@@ -2329,6 +2329,8 @@ html.mobile-menu-open .nav.open {
     display: flex;
     align-items: center;
     margin: 4px 0 8px;
+    transition: filter 0.08s ease-out;
+    will-change: filter;
 }
 
 .deck-eq-bars {
@@ -3259,6 +3261,8 @@ html.mobile-menu-open .nav.open {
     overflow: hidden;
     user-select: none;
     -webkit-user-select: none;
+    transition: transform 0.08s ease-out;
+    will-change: transform;
 }
 
 .studio-vinyl-grooves {
@@ -3621,6 +3625,8 @@ html.mobile-menu-open .nav.open {
     height: 56px;
     margin: 8px 0 16px;
     overflow: visible;
+    transition: filter 0.08s ease-out, transform 0.06s ease-out;
+    will-change: transform, filter;
 }
 
 .studio-wave-bar {

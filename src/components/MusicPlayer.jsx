@@ -65,15 +65,29 @@ const WAVE_BARS = [
   22, 24, 26, 30, 34, 29, 32, 28, 26, 22, 18, 14, 10, 12, 8, 6,
 ];
 
-// Precomputed frequency bin indices for 32 Studio Deck bars (musical range ~50Hz - 4200Hz, fftSize = 512)
-const STUDIO_BIN_INDICES = [
-  1, 2, 2, 3, 3, 4, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15,
-  17, 19, 21, 23, 26, 29, 32, 35, 38, 41, 44, 47, 50, 53, 56, 60,
+// Precomputed frequency bin ranges for 32 Studio Deck bars (20Hz - 16,000Hz, fftSize = 1024)
+// Mapped logarithmically across the 3 core musical bands:
+// Bars 0-7: Bass band (20 - 250 Hz)
+// Bars 8-23: Midrange band (250 - 4,000 Hz)
+// Bars 24-31: Treble band (4,000 - 16,000 Hz)
+const STUDIO_BAR_RANGES = [
+  // 8 Bass bars (20 - 250 Hz)
+  [1, 1], [1, 2], [2, 2], [2, 3], [3, 4], [4, 5], [5, 5], [5, 6],
+  // 16 Midrange bars (250 - 4,000 Hz)
+  [6, 7], [7, 9], [9, 11], [11, 14], [14, 18], [18, 22], [22, 27], [27, 33],
+  [33, 40], [40, 48], [48, 56], [56, 65], [65, 74], [74, 83], [83, 92], [92, 102],
+  // 8 Treble bars (4,000 - 16,000 Hz)
+  [102, 120], [120, 145], [145, 175], [175, 210], [210, 255], [255, 310], [310, 375], [375, 450],
 ];
 
-// Precomputed frequency bin indices for 18 Compact Deck bars (musical range ~60Hz - 2150Hz, fftSize = 512)
-const COMPACT_BIN_INDICES = [
-  1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 18, 20, 23,
+// Precomputed frequency bin ranges for 18 Compact Deck bars (20Hz - 16,000Hz, fftSize = 1024)
+const COMPACT_BAR_RANGES = [
+  // 4 Bass bars
+  [1, 2], [2, 3], [3, 4], [5, 6],
+  // 9 Midrange bars
+  [7, 9], [9, 13], [13, 18], [18, 26], [26, 36], [36, 49], [49, 65], [65, 83], [83, 102],
+  // 5 Treble bars
+  [102, 135], [135, 180], [180, 240], [240, 320], [320, 430],
 ];
 
 function formatTime(seconds) {
@@ -119,17 +133,39 @@ export default function MusicPlayer({ isDeckOpen, setIsDeckOpen, onPlayingStateC
   const freqDataRef = useRef(null);
   const mediaSourceConnectedRef = useRef(false);
 
-  // Visualizer bar element refs
+  // Visualizer bar element & reactive container refs
   const studioBarsRef = useRef([]);
   const compactBarsRef = useRef([]);
   const miniBarsRef = useRef([]);
   const playlistWaveBarsRef = useRef([]);
+  const studioWaveContainerRef = useRef(null);
+  const studioVinylDiscRef = useRef(null);
+  const compactWaveContainerRef = useRef(null);
 
   // Exponentially smoothed amplitude levels for organic wave physics
   const studioLevelsRef = useRef(new Float32Array(32));
   const compactLevelsRef = useRef(new Float32Array(18));
   const miniLevelsRef = useRef(new Float32Array(4));
   const playlistLevelsRef = useRef(new Float32Array(3));
+
+  // Adaptive normalization floor & ceiling trackers (prevents saturation during dense music)
+  const adaptiveFloorsRef = useRef(new Float32Array(32).fill(15));
+  const adaptiveCeilingsRef = useRef(new Float32Array(32).fill(160));
+  const compactFloorsRef = useRef(new Float32Array(18).fill(15));
+  const compactCeilingsRef = useRef(new Float32Array(18).fill(160));
+
+  // 3-Band frequency energy trackers: Bass (20-250 Hz), Midrange (250-4000 Hz), Treble (4000-20000 Hz)
+  const bassFloorRef = useRef(15);
+  const bassCeilRef = useRef(160);
+  const midFloorRef = useRef(15);
+  const midCeilRef = useRef(160);
+  const trebleFloorRef = useRef(10);
+  const trebleCeilRef = useRef(120);
+
+  const bassLevelRef = useRef(0);
+  const midLevelRef = useRef(0);
+  const trebleLevelRef = useRef(0);
+
   const animFrameRef = useRef(null);
   const isPlayingRef = useRef(isPlaying);
   isPlayingRef.current = isPlaying;
@@ -337,8 +373,8 @@ export default function MusicPlayer({ isDeckOpen, setIsDeckOpen, onPlayingStateC
       audioContextRef.current = ctx;
 
       const analyser = ctx.createAnalyser();
-      analyser.fftSize = 512;
-      analyser.smoothingTimeConstant = 0.45;
+      analyser.fftSize = 1024;
+      analyser.smoothingTimeConstant = 0.35;
       analyser.minDecibels = -90;
       analyser.maxDecibels = -5;
       analyserRef.current = analyser;
@@ -378,102 +414,254 @@ export default function MusicPlayer({ isDeckOpen, setIsDeckOpen, onPlayingStateC
       analyser.getByteFrequencyData(data);
     }
 
-    // Dynamic crest-factor tracking: tracks instantaneous audio power
-    // Adapts seamlessly to any mastering loudness so bars never saturate or freeze at higher volumes
-    let framePeak = 0;
+    // 1. Live 3-Band Frequency Analysis:
+    // Bass: 20–250 Hz (bins 1..5 at fftSize 1024)
+    // Midrange: 250–4,000 Hz (bins 6..85)
+    // Treble: 4,000–20,000 Hz (bins 86..400)
+    let rawBassSum = 0, rawBassPeak = 0;
     if (data && currentlyPlaying) {
-      for (let b = 1; b < 60; b++) {
-        if (data[b] > framePeak) framePeak = data[b];
+      for (let b = 1; b <= 5; b++) {
+        const v = data[b] || 0;
+        if (v > rawBassPeak) rawBassPeak = v;
+        rawBassSum += v;
       }
     }
-    peakTrackerRef.current = Math.max(130, Math.max(peakTrackerRef.current * 0.985, framePeak));
-    const dynamicCeiling = peakTrackerRef.current;
+    const rawBass = rawBassPeak * 0.7 + (rawBassSum / 5) * 0.3;
 
-    // 1. Mode 3: Studio Waveform (32 bars - real audio reactivity across frequency & amplitude)
+    let rawMidSum = 0, rawMidPeak = 0, midCount = 0;
+    if (data && currentlyPlaying) {
+      for (let b = 6; b <= 85; b += 2) {
+        const v = data[b] || 0;
+        if (v > rawMidPeak) rawMidPeak = v;
+        rawMidSum += v;
+        midCount++;
+      }
+    }
+    const rawMid = midCount > 0 ? rawMidPeak * 0.65 + (rawMidSum / midCount) * 0.35 : 0;
+
+    let rawTrebleSum = 0, rawTreblePeak = 0, trebleCount = 0;
+    if (data && currentlyPlaying) {
+      for (let b = 86; b <= 400; b += 4) {
+        const v = data[b] || 0;
+        if (v > rawTreblePeak) rawTreblePeak = v;
+        rawTrebleSum += v;
+        trebleCount++;
+      }
+    }
+    const rawTreble = trebleCount > 0 ? rawTreblePeak * 0.7 + (rawTrebleSum / trebleCount) * 0.3 : 0;
+
+    // 2. Dynamic Normalization for 3 core musical bands:
+    // Adaptive tracking prevents saturation during dense walls of sound
+    if (rawBass > bassCeilRef.current) {
+      bassCeilRef.current = Math.max(rawBass, bassCeilRef.current * 0.94 + rawBass * 0.06);
+    } else {
+      bassCeilRef.current = Math.max(50, bassCeilRef.current * 0.993);
+    }
+    bassFloorRef.current = Math.min(rawBass, bassFloorRef.current * 0.99 + rawBass * 0.01);
+    const bassHeadroom = Math.max(28, bassCeilRef.current - bassFloorRef.current);
+    const normBass = currentlyPlaying ? Math.max(0, Math.min(1.0, (rawBass - bassFloorRef.current) / bassHeadroom)) : 0;
+
+    if (rawMid > midCeilRef.current) {
+      midCeilRef.current = Math.max(rawMid, midCeilRef.current * 0.94 + rawMid * 0.06);
+    } else {
+      midCeilRef.current = Math.max(45, midCeilRef.current * 0.993);
+    }
+    midFloorRef.current = Math.min(rawMid, midFloorRef.current * 0.99 + rawMid * 0.01);
+    const midHeadroom = Math.max(24, midCeilRef.current - midFloorRef.current);
+    const normMid = currentlyPlaying ? Math.max(0, Math.min(1.0, (rawMid - midFloorRef.current) / midHeadroom)) : 0;
+
+    if (rawTreble > trebleCeilRef.current) {
+      trebleCeilRef.current = Math.max(rawTreble, trebleCeilRef.current * 0.94 + rawTreble * 0.06);
+    } else {
+      trebleCeilRef.current = Math.max(30, trebleCeilRef.current * 0.993);
+    }
+    trebleFloorRef.current = Math.min(rawTreble, trebleFloorRef.current * 0.99 + rawTreble * 0.01);
+    const trebleHeadroom = Math.max(18, trebleCeilRef.current - trebleFloorRef.current);
+    const normTreble = currentlyPlaying ? Math.max(0, Math.min(1.0, (rawTreble - trebleFloorRef.current) / trebleHeadroom)) : 0;
+
+    // Asymmetric temporal smoothing for overall bands (fast attack 0.76, smooth decay 0.20)
+    const smoothBand = (curr, prev, attack = 0.76, decay = 0.20) => {
+      return prev + (curr - prev) * (curr > prev ? attack : decay);
+    };
+    bassLevelRef.current = smoothBand(normBass, bassLevelRef.current, 0.78, 0.20);
+    midLevelRef.current = smoothBand(normMid, midLevelRef.current, 0.72, 0.20);
+    trebleLevelRef.current = smoothBand(normTreble, trebleLevelRef.current, 0.76, 0.18);
+
+    // 3. Mode 3: Studio Waveform (32 bars - real audio reactivity across frequency & amplitude)
     const studioBars = studioBarsRef.current;
+    const studioFloors = adaptiveFloorsRef.current;
+    const studioCeils = adaptiveCeilingsRef.current;
+
     if (studioBars && studioBars.length > 0) {
       for (let i = 0; i < 32; i++) {
         const bar = studioBars[i];
         if (!bar) continue;
 
-        const bin = STUDIO_BIN_INDICES[i] || (i + 1);
-        const raw = (data && currentlyPlaying)
-          ? Math.max(
-            data[bin] || 0,
-            data[bin - 1] || 0,
-            data[bin + 1] || 0
-          )
+        const [startBin, endBin] = STUDIO_BAR_RANGES[i] || [i + 1, i + 1];
+        let barPeak = 0;
+        let barSum = 0;
+        if (data && currentlyPlaying) {
+          for (let b = startBin; b <= endBin; b++) {
+            const val = data[b] || 0;
+            if (val > barPeak) barPeak = val;
+            barSum += val;
+          }
+        }
+        const binCount = endBin - startBin + 1;
+        const rawBar = binCount > 1 ? barPeak * 0.65 + (barSum / binCount) * 0.35 : barPeak;
+
+        // Dynamic normalization per bar (adaptive floor & ceiling prevents freezing during loud passages)
+        if (rawBar > studioCeils[i]) {
+          studioCeils[i] = Math.max(rawBar, studioCeils[i] * 0.92 + rawBar * 0.08);
+        } else {
+          studioCeils[i] = Math.max(35, studioCeils[i] * 0.992);
+        }
+
+        if (rawBar < studioFloors[i]) {
+          studioFloors[i] = studioFloors[i] * 0.85 + rawBar * 0.15;
+        } else {
+          studioFloors[i] = studioFloors[i] * 0.996 + rawBar * 0.004;
+        }
+
+        const barHeadroom = Math.max(26, studioCeils[i] - studioFloors[i]);
+        let barNorm = currentlyPlaying
+          ? Math.max(0, Math.min(1.0, (rawBar - studioFloors[i]) / barHeadroom))
           : 0;
 
-        // Equal-loudness acoustic curve: gentle tilt across musical registers
-        const progress = i / (32 - 1);
-        const tilt = 1.0 + Math.pow(progress, 0.65) * 1.5;
-        // Dynamic normalization: guarantees lively motion without clipping or freezing
-        const energy = Math.min(1.0, (raw / dynamicCeiling) * tilt);
+        // Acoustic equal-loudness tilt (gives treble instruments and transients active motion)
+        const acousticWeight = 1.0 + Math.pow(i / 31, 0.6) * 0.45;
+        barNorm = Math.min(1.0, barNorm * acousticWeight);
 
-        // Fast responsive attack (0.68) for crisp punch, natural decay (0.22)
+        // Nonlinear scaling: perceptual curve (gamma = 1.25)
+        const perceptualVal = Math.pow(barNorm, 1.25);
+
+        // Temporal smoothing: fast attack (0.76) for transients, gentle decay (0.20)
         const prev = studioLevelsRef.current[i] || 0;
-        const smoothed = prev + (energy - prev) * (energy > prev ? 0.68 : 0.22);
+        const smoothed = prev + (perceptualVal - prev) * (perceptualVal > prev ? 0.76 : 0.20);
         studioLevelsRef.current[i] = smoothed;
 
         // Live amplitude & frequency scaling:
-        // Gentle resting state (~0.20), expands up to 2.2x on energetic audio passages
-        const minScale = 0.20;
+        // Dynamic scaling without artificial clamping - reacts organically to audio power
+        const minScale = 0.22;
         const scale = currentlyPlaying
-          ? minScale + Math.pow(smoothed, 1.25) * 2.05
+          ? minScale + smoothed * 1.85
           : minScale;
         bar.style.transform = `scaleY(${scale.toFixed(3)})`;
-        bar.style.opacity = currentlyPlaying ? (0.7 + smoothed * 0.3).toFixed(2) : "0.5";
+        bar.style.opacity = currentlyPlaying ? (0.75 + smoothed * 0.25).toFixed(2) : "0.5";
       }
     }
 
-    // 2. Mode 2: Compact Deck Bars (18 bars - small & contained height, dynamic live response)
+    // 4. Mode 2: Compact Deck Bars (18 bars - small & contained height, dynamic live response)
     const compactBars = compactBarsRef.current;
+    const cFloors = compactFloorsRef.current;
+    const cCeils = compactCeilingsRef.current;
+
     if (compactBars && compactBars.length > 0) {
       for (let i = 0; i < 18; i++) {
         const bar = compactBars[i];
         if (!bar) continue;
 
-        const bin = COMPACT_BIN_INDICES[i] || (i + 1);
-        const raw = (data && currentlyPlaying)
-          ? Math.max(
-            data[bin] || 0,
-            data[bin - 1] || 0,
-            data[bin + 1] || 0
-          )
+        const [startBin, endBin] = COMPACT_BAR_RANGES[i] || [i + 1, i + 1];
+        let barPeak = 0;
+        let barSum = 0;
+        if (data && currentlyPlaying) {
+          for (let b = startBin; b <= endBin; b++) {
+            const val = data[b] || 0;
+            if (val > barPeak) barPeak = val;
+            barSum += val;
+          }
+        }
+        const binCount = endBin - startBin + 1;
+        const rawBar = binCount > 1 ? barPeak * 0.65 + (barSum / binCount) * 0.35 : barPeak;
+
+        if (rawBar > cCeils[i]) {
+          cCeils[i] = Math.max(rawBar, cCeils[i] * 0.92 + rawBar * 0.08);
+        } else {
+          cCeils[i] = Math.max(35, cCeils[i] * 0.992);
+        }
+
+        if (rawBar < cFloors[i]) {
+          cFloors[i] = cFloors[i] * 0.85 + rawBar * 0.15;
+        } else {
+          cFloors[i] = cFloors[i] * 0.996 + rawBar * 0.004;
+        }
+
+        const barHeadroom = Math.max(26, cCeils[i] - cFloors[i]);
+        let barNorm = currentlyPlaying
+          ? Math.max(0, Math.min(1.0, (rawBar - cFloors[i]) / barHeadroom))
           : 0;
 
-        const progress = i / (18 - 1);
-        const tilt = 1.0 + Math.pow(progress, 0.65) * 1.35;
-        const energy = Math.min(1.0, (raw / dynamicCeiling) * tilt);
+        const acousticWeight = 1.0 + Math.pow(i / 17, 0.6) * 0.40;
+        barNorm = Math.min(1.0, barNorm * acousticWeight);
+
+        const perceptualVal = Math.pow(barNorm, 1.25);
 
         const prev = compactLevelsRef.current[i] || 0;
-        const smoothed = prev + (energy - prev) * (energy > prev ? 0.68 : 0.22);
+        const smoothed = prev + (perceptualVal - prev) * (perceptualVal > prev ? 0.76 : 0.20);
         compactLevelsRef.current[i] = smoothed;
 
         // In compact mode: base height is 8px.
-        // Resting scale: 0.25 (~2.0px). Peak scale: 0.70 (~5.6px max).
-        const minScale = 0.25;
-        const scale = currentlyPlaying ? minScale + smoothed * 0.45 : minScale;
+        // Resting scale: 0.22. Active scaling reaches ~0.70 max to stay contained within 10px container
+        const minScale = 0.22;
+        const scale = currentlyPlaying ? minScale + smoothed * 0.48 : minScale;
         bar.style.transform = `scaleY(${scale.toFixed(3)})`;
       }
     }
 
-    // 3. Mode 1: Mini Equalizer (4 bars)
+    // 5. Multiple Reactive Properties:
+    // Studio Wave Container width breathing (Bass) & Coral Glow shimmer (Treble)
+    const studioWaveContainer = studioWaveContainerRef.current;
+    if (studioWaveContainer) {
+      if (currentlyPlaying) {
+        const widthScale = (1.0 + bassLevelRef.current * 0.038).toFixed(3);
+        const glowSpread = (3 + trebleLevelRef.current * 10).toFixed(1);
+        const glowAlpha = (0.2 + trebleLevelRef.current * 0.45).toFixed(2);
+        studioWaveContainer.style.transform = `scaleX(${widthScale})`;
+        studioWaveContainer.style.filter = `drop-shadow(0 0 ${glowSpread}px rgba(255, 99, 88, ${glowAlpha}))`;
+      } else {
+        studioWaveContainer.style.transform = "none";
+        studioWaveContainer.style.filter = "none";
+      }
+    }
+
+    // Studio Vinyl Disc Resonance (Sub-bass physical resonance pulse)
+    const vinylDisc = studioVinylDiscRef.current;
+    if (vinylDisc) {
+      if (currentlyPlaying) {
+        const vinylScale = (1.0 + bassLevelRef.current * 0.022).toFixed(3);
+        vinylDisc.style.transform = `scale(${vinylScale})`;
+      } else {
+        vinylDisc.style.transform = "none";
+      }
+    }
+
+    // Compact Wave Container Treble glow
+    const compactWaveContainer = compactWaveContainerRef.current;
+    if (compactWaveContainer) {
+      if (currentlyPlaying) {
+        const glowSpread = (2 + trebleLevelRef.current * 6).toFixed(1);
+        compactWaveContainer.style.filter = `drop-shadow(0 0 ${glowSpread}px rgba(255, 99, 88, 0.35))`;
+      } else {
+        compactWaveContainer.style.filter = "none";
+      }
+    }
+
+    // 6. Mode 1: Mini Equalizer (4 bars)
     const miniBars = miniBarsRef.current;
     if (miniBars && miniBars.length >= 4) {
-      const b1 = (data && currentlyPlaying) ? Math.max(data[1] || 0, data[2] || 0) / dynamicCeiling * 1.2 : 0;
-      const b2 = (data && currentlyPlaying) ? Math.max(data[4] || 0, data[6] || 0) / dynamicCeiling * 1.5 : 0;
-      const b3 = (data && currentlyPlaying) ? Math.max(data[9] || 0, data[12] || 0) / dynamicCeiling * 1.8 : 0;
-      const b4 = (data && currentlyPlaying) ? Math.max(data[16] || 0, data[22] || 0) / dynamicCeiling * 2.2 : 0;
-      const bands = [Math.min(1, b1), Math.min(1, b2), Math.min(1, b3), Math.min(1, b4)];
+      const bands = [
+        normBass,
+        Math.max(normBass * 0.4, normMid * 0.9),
+        normMid,
+        normTreble,
+      ];
 
       for (let i = 0; i < 4; i++) {
         const bar = miniBars[i];
         if (!bar) continue;
         const target = bands[i];
         const prev = miniLevelsRef.current[i] || 0;
-        const smoothed = prev + (target - prev) * (target > prev ? 0.68 : 0.22);
+        const smoothed = prev + (target - prev) * (target > prev ? 0.74 : 0.20);
         miniLevelsRef.current[i] = smoothed;
 
         const h = currentlyPlaying ? Math.max(3, Math.min(16, Math.round(3 + smoothed * 13))) : 3;
@@ -481,20 +669,17 @@ export default function MusicPlayer({ isDeckOpen, setIsDeckOpen, onPlayingStateC
       }
     }
 
-    // 4. Playlist active track wave icon (3 bars)
+    // 7. Playlist active track wave icon (3 bars)
     const playlistWaveBars = playlistWaveBarsRef.current;
     if (playlistWaveBars && playlistWaveBars.length >= 3) {
-      const pw1 = (data && currentlyPlaying) ? (Math.max(data[2] || 0, data[3] || 0) / dynamicCeiling) * 1.3 : 0;
-      const pw2 = (data && currentlyPlaying) ? (Math.max(data[6] || 0, data[9] || 0) / dynamicCeiling) * 1.6 : 0;
-      const pw3 = (data && currentlyPlaying) ? (Math.max(data[15] || 0, data[20] || 0) / dynamicCeiling) * 2.0 : 0;
-      const pwBands = [Math.min(1, pw1), Math.min(1, pw2), Math.min(1, pw3)];
+      const pwBands = [normBass, normMid, normTreble];
 
       for (let i = 0; i < 3; i++) {
         const bar = playlistWaveBars[i];
         if (!bar) continue;
         const target = pwBands[i];
         const prev = playlistLevelsRef.current[i] || 0;
-        const smoothed = prev + (target - prev) * (target > prev ? 0.68 : 0.22);
+        const smoothed = prev + (target - prev) * (target > prev ? 0.74 : 0.20);
         playlistLevelsRef.current[i] = smoothed;
 
         const h = currentlyPlaying ? Math.max(3, Math.min(14, Math.round(3 + smoothed * 11))) : 4;
@@ -507,10 +692,13 @@ export default function MusicPlayer({ isDeckOpen, setIsDeckOpen, onPlayingStateC
     } else {
       let stillSettling = false;
       for (let i = 0; i < 32; i++) {
-        if ((studioLevelsRef.current[i] || 0) > 0.01) {
+        if ((studioLevelsRef.current[i] || 0) > 0.005) {
           stillSettling = true;
           break;
         }
+      }
+      if (bassLevelRef.current > 0.005 || trebleLevelRef.current > 0.005) {
+        stillSettling = true;
       }
       if (stillSettling) {
         animFrameRef.current = requestAnimationFrame(updateVisualizers);
@@ -653,6 +841,18 @@ export default function MusicPlayer({ isDeckOpen, setIsDeckOpen, onPlayingStateC
     if (audioContextRef.current && audioContextRef.current.state === "suspended") {
       audioContextRef.current.resume().catch(() => { });
     }
+
+    // Reset adaptive normalization dynamic ranges for incoming track
+    adaptiveFloorsRef.current.fill(15);
+    adaptiveCeilingsRef.current.fill(160);
+    compactFloorsRef.current.fill(15);
+    compactCeilingsRef.current.fill(160);
+    bassFloorRef.current = 15;
+    bassCeilRef.current = 160;
+    midFloorRef.current = 15;
+    midCeilRef.current = 160;
+    trebleFloorRef.current = 10;
+    trebleCeilRef.current = 120;
 
     setCurrentIndex(index);
     setCurrentTime(0);
@@ -1080,7 +1280,7 @@ export default function MusicPlayer({ isDeckOpen, setIsDeckOpen, onPlayingStateC
                   <h4 className="deck-artist-name">{currentTrack.artist}</h4>
 
                   {/* Visualizer graphic bars - Web Audio reactive */}
-                  <div className="deck-waveform" aria-hidden="true">
+                  <div ref={compactWaveContainerRef} className="deck-waveform" aria-hidden="true">
                     <div className={`deck-eq-bars ${isPlaying ? "active" : ""}`}>
                       {[...Array(18)].map((_, i) => (
                         <span
@@ -1422,7 +1622,7 @@ export default function MusicPlayer({ isDeckOpen, setIsDeckOpen, onPlayingStateC
                         />
                       </div>
 
-                      <div className={`studio-vinyl-disc ${isPlaying ? "spinning" : ""}`}>
+                      <div ref={studioVinylDiscRef} className={`studio-vinyl-disc ${isPlaying ? "spinning" : ""}`}>
                         <div className="studio-vinyl-grooves">
                           <div className="studio-vinyl-sheen" />
                           <div className="studio-vinyl-label">
@@ -1507,6 +1707,7 @@ export default function MusicPlayer({ isDeckOpen, setIsDeckOpen, onPlayingStateC
 
                 {/* Coral Soundwave Visualizer - Web Audio reactive */}
                 <div
+                  ref={studioWaveContainerRef}
                   className={`studio-wave-container ${isPlaying ? "playing" : ""}`}
                   aria-hidden="true"
                 >
