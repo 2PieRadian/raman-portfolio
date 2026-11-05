@@ -29,7 +29,7 @@ import {
 
 import MusicPlayer from "./components/MusicPlayer";
 import CustomCursor from "./components/CustomCursor";
-import SmoothScroll, { scrollToSection } from "./components/SmoothScroll";
+import SmoothScroll, { scrollToSection, getLenis } from "./components/SmoothScroll";
 import InteractiveHeroCanvas, { fireAwwwardsConfetti, LiveTimeTicker } from "./components/InteractiveHeroCanvas";
 import Project3DCard from "./components/Project3DCard";
 import MarqueeRibbon from "./components/MarqueeRibbon";
@@ -59,15 +59,12 @@ const projects = [
     name: "Wash and Wow",
     type: "ON-DEMAND LAUNDRY · MOBILE & WEB",
     color: "lime",
-    headline: "Care that moves at your speed.",
+    headline: "Doorstep laundry and home cleaning with live order tracking.",
     description:
-      "An on-demand garment-care platform with a multi-stage order state machine, live status tracking, fabric and weight-based pricing, 8km Haversine geofencing for branch routing, and a promotional wallet engine.",
-    stack: ["React Native", "Expo", "TypeScript", "PostgreSQL"],
-    blueprints: [
-      "Order State Machine: Draft → Picked → In-Wash → Quality Check → Out for Delivery",
-      "8km Haversine Geofencing branch dispatch & geofence routing algorithm",
-      "Promotional wallet engine with atomic balance updates & concurrency locks",
-    ],
+      "A mobile and web booking platform where customers can schedule doorstep laundry and cleaning services, choose convenient morning or evening time slots, and track their order through every step from pickup to wash and return.",
+    howWeDidIt:
+      "I built an automated system that matches customer addresses with the closest local branch, coordinates rider pickup and delivery trips, and sends live status notifications directly to the customer's phone.",
+    stack: ["React Native", "Expo", "TypeScript", "Node.js", "PostgreSQL"],
     date: "APRIL 2026 — MAY 2026",
     links: [
       { label: "Website", href: links.wash },
@@ -79,32 +76,26 @@ const projects = [
     name: "Ornify",
     type: "LUXURY E-COMMERCE · CUSTOM GIFT BUILDER",
     color: "coral",
-    headline: "A little more personal.",
+    headline: "Custom gift box builder and personalized luxury shopping.",
     description:
-      "An e-commerce experience with a custom Gift Box Builder, dynamic piece bounds and greeting cards, strict multi-attribute variant validation, WhatsApp abandoned-cart recovery, and a complete return and exchange lifecycle.",
-    stack: ["TypeScript", "Node.js", "Express", "Supabase"],
-    blueprints: [
-      "Custom Gift Box Builder with dynamic piece bounding constraints & live SVG layout",
-      "Strict multi-attribute variant validation engine with combinatorial integrity",
-      "Automated WhatsApp abandoned-cart recovery with signed checkout URLs",
-    ],
+      "An e-commerce store featuring a custom gift box builder where shoppers can pick a designer box, hand-select matching jewelry and lifestyle gifts, add a personalized printed greeting card, and preview the gift before checkout.",
+    howWeDidIt:
+      "I built an interactive box builder that calculates remaining box space and pricing in real time, integrated instant pincode delivery checks, and connected live courier tracking from checkout to doorstep delivery.",
+    stack: ["React.js", "TypeScript", "Node.js", "Express", "Supabase"],
     date: "SEP 2026 — OCT 2026",
     links: [{ label: "Visit Ornify", href: links.ornify }],
   },
   {
     number: "03",
     name: "BankVoice AI",
-    type: "VOICE AUTHENTICATION · BANKING ANALYTICS",
+    type: "VOICE INTELLIGENCE · BANKING ANALYTICS",
     color: "lilac",
-    headline: "Every voice tells a story.",
+    headline: "Real-time speech intelligence and customer support assistant.",
     description:
-      "An on-premise audio intelligence platform turning customer voice streams into banking telemetry. Includes Whisper transcription, DistilBERT sentiment scoring, a six-domain complaint taxonomy, fraud escalation, and acoustic speaker verification.",
-    stack: ["Python", "Whisper", "DistilBERT", "SciPy"],
-    blueprints: [
-      "On-premise Whisper STT audio transcription with zero third-party latency",
-      "Acoustic speaker verification analyzing spectral MFCC voice characteristics via SciPy",
-      "Six-domain complaint taxonomy classifier with automated fraud severity escalation",
-    ],
+      "A voice intelligence tool for banking call centers that listens to customer calls, converts spoken conversation into text in real time, and identifies caller mood and urgency.",
+    howWeDidIt:
+      "I created an audio processing system that categorizes caller issues, verifies caller voices for security, and immediately flags distressed callers or suspected fraud to help support teams respond quickly.",
+    stack: ["Python", "Speech-to-Text", "NLP", "FastAPI"],
     date: "NOV 2026",
     links: [{ label: "GitHub repository", href: links.bank }],
   },
@@ -113,32 +104,26 @@ const projects = [
     name: "MindCurePath",
     type: "MENTAL HEALTHCARE · TELE-COUNSELLING",
     color: "ink",
-    headline: "Technology with a human side.",
+    headline: "Tele-therapy platform with live video sessions and smart scheduling.",
     description:
-      "A mental-health platform with therapist scheduling and double-booking prevention, PHQ-9 and GAD-7 intake scoring, encrypted clinical journaling, and post-consultation feedback.",
-    stack: ["React.js", "Node.js", "PostgreSQL", "TailwindCSS"],
-    blueprints: [
-      "Concurrency-safe slot reservation engine eliminating therapist double-booking",
-      "Standardized psychiatric assessment scoring algorithms for PHQ-9 and GAD-7",
-      "Encrypted digital health journaling system with clinical audit trails",
-    ],
+      "A mental wellness platform across mobile and web where users can discover licensed therapists by specialty, book 1-on-1 private video therapy sessions, and complete confidential self-assessment health quizzes.",
+    howWeDidIt:
+      "I built a calendar booking engine that prevents double-booking, integrated secure video calling for private sessions, and developed an administrative dashboard to verify therapist credentials and manage schedules.",
+    stack: ["React Native", "React.js", "Node.js", "TypeScript", "PostgreSQL"],
     date: "DEC 2025 — MARCH 2026",
     links: [{ label: "Visit platform", href: links.mind }],
   },
   {
     number: "05",
     name: "Distributed Java Chess Engine",
-    type: "CORE OOP ENGINE · MOVE GENERATOR · WEBSOCKET API",
+    type: "CHESS ENGINE · MULTIPLAYER SERVER",
     color: "lime",
-    headline: "A game of states and systems.",
+    headline: "Real-time multiplayer chess engine built from scratch in Java.",
     description:
-      "An immutable board-representation engine built from first principles, with legal move generation and board-state validation. Exposes REST and WebSocket APIs for real-time multiplayer matchmaking and board-evaluation streaming.",
-    stack: ["Java", "OOP", "REST APIs", "WebSocket"],
-    blueprints: [
-      "Immutable bitboard state model with zero-allocation legal move generation",
-      "WebSocket streaming server for live board evaluation broadcasting",
-      "Strict OOP architecture with exhaustive checkmate, stalemate, and draw validation",
-    ],
+      "A fast online chess platform where two players can join a game room and play live chess with instant move validation, timers, and checkmate detection.",
+    howWeDidIt:
+      "I programmed all chess rules and move calculations from scratch in Java, connecting players through real-time communication so every move and game state updates across screens with zero delay.",
+    stack: ["Java", "OOP", "WebSockets", "REST APIs"],
     date: "IN PROGRESS",
     links: [{ label: "GitHub repository", href: links.chess }],
   },
@@ -398,53 +383,202 @@ function Header() {
     ["Say hello", "#contact"],
   ];
 
+  // Prevent background scroll when mobile menu is open & listen for Escape key
+  useEffect(() => {
+    if (open) {
+      // 1. Cease Lenis smooth momentum scrolling
+      getLenis()?.stop();
+
+      // 2. Lock both HTML and Body overflow and touch scrolling
+      const prevBodyOverflow = document.body.style.overflow;
+      const prevHtmlOverflow = document.documentElement.style.overflow;
+      document.body.style.overflow = "hidden";
+      document.documentElement.style.overflow = "hidden";
+      document.body.classList.add("mobile-menu-open");
+      document.documentElement.classList.add("mobile-menu-open");
+
+      // 3. Escape key listener
+      const handleKeyDown = (e) => {
+        if (e.key === "Escape") setOpen(false);
+      };
+      window.addEventListener("keydown", handleKeyDown);
+
+      // 4. Lock background touchmove events while allowing internal drawer scrolling
+      const preventTouchMove = (e) => {
+        if (!e.target.closest("#primary-navigation")) {
+          e.preventDefault();
+        }
+      };
+      document.addEventListener("touchmove", preventTouchMove, { passive: false });
+
+      return () => {
+        getLenis()?.start();
+        document.body.style.overflow = prevBodyOverflow;
+        document.documentElement.style.overflow = prevHtmlOverflow;
+        document.body.classList.remove("mobile-menu-open");
+        document.documentElement.classList.remove("mobile-menu-open");
+        window.removeEventListener("keydown", handleKeyDown);
+        document.removeEventListener("touchmove", preventTouchMove);
+      };
+    }
+  }, [open]);
+
+  // Close mobile drawer on desktop resize
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth > 768 && open) {
+        setOpen(false);
+      }
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [open]);
+
+  const handleLinkClick = (e, href) => {
+    sfx.playPop();
+
+    // 1. Instantly unlock scroll styles before initiating scroll
+    document.body.classList.remove("mobile-menu-open");
+    document.documentElement.classList.remove("mobile-menu-open");
+    document.body.style.overflow = "";
+    document.documentElement.style.overflow = "";
+    getLenis()?.start();
+
+    // 2. Close mobile menu
+    setOpen(false);
+
+    // 3. Scroll to target section
+    if (href && href.startsWith("#")) {
+      e.preventDefault();
+      setTimeout(() => {
+        scrollToSection(href, { force: true });
+        const el = document.querySelector(href);
+        if (el && !getLenis()) {
+          el.scrollIntoView({ behavior: "smooth" });
+        }
+      }, 50);
+    }
+  };
+
   return (
-    <header className="topbar">
-      <a
-        className="wordmark"
-        href="#home"
-        data-magnetic
-        onClick={() => sfx.playPop()}
-      >
-        <span className="mark">✳</span> raman<span className="wordmark-light">bhardwaj.</span>
-      </a>
+    <>
+      <header className="topbar">
+        <a
+          className="wordmark"
+          href="#home"
+          data-magnetic
+          onClick={(e) => handleLinkClick(e, "#home")}
+        >
+          <span className="mark">✳</span> raman<span className="wordmark-light">bhardwaj.</span>
+        </a>
 
-      <nav className={open ? "nav open" : "nav"}>
-        {nav.map(([name, href]) => (
-          <a
-            key={name}
-            href={href}
-            onClick={() => {
-              setOpen(false);
-              sfx.playPop();
-            }}
-            data-magnetic
-          >
-            {name}
-          </a>
-        ))}
-      </nav>
+        <nav
+          className={`nav ${open ? "open" : ""}`}
+          id="primary-navigation"
+          aria-label="Primary navigation"
+          data-lenis-prevent="true"
+        >
+          <div className="nav-links-wrap">
+            {nav.map(([name, href]) => (
+              <a
+                key={name}
+                href={href}
+                className="nav-link-item"
+                onClick={(e) => handleLinkClick(e, href)}
+                data-magnetic
+              >
+                <span className="nav-link-text">{name}</span>
+                <span className="mobile-nav-arrow" aria-hidden="true">
+                  <ArrowUpRight size={16} />
+                </span>
+              </a>
+            ))}
+          </div>
 
-      <a
-        className="nav-cta"
-        href={links.email}
-        data-magnetic
-        onClick={() => sfx.playPop()}
-      >
-        Let’s talk <ArrowUpRight size={15} />
-      </a>
+          {/* Editorial mobile drawer footer */}
+          <div className="mobile-nav-footer">
+            <div className="mobile-nav-contact-card">
+              <span className="mobile-nav-tag">DIRECT INQUIRY</span>
+              <a
+                href={links.email}
+                className="mobile-nav-email"
+                onClick={() => sfx.playPop()}
+              >
+                <span>ramanbhardwaj2005@gmail.com</span>
+                <ArrowUpRight size={15} />
+              </a>
+            </div>
 
-      <button
-        className="menu-toggle"
-        aria-label="Toggle navigation"
+            <div className="mobile-nav-bottom-row">
+              <span className="mobile-nav-meta">DELHI, INDIA • UTC+5:30</span>
+              <div className="mobile-nav-socials">
+                <a
+                  href={links.github}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label="GitHub"
+                  onClick={() => sfx.playPop()}
+                >
+                  <Github size={15} />
+                </a>
+                <a
+                  href={links.linkedin}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label="LinkedIn"
+                  onClick={() => sfx.playPop()}
+                >
+                  <Linkedin size={15} />
+                </a>
+                <a
+                  href={links.email}
+                  aria-label="Email"
+                  onClick={() => sfx.playPop()}
+                >
+                  <Mail size={15} />
+                </a>
+              </div>
+            </div>
+          </div>
+        </nav>
+
+        <a
+          className="nav-cta"
+          href={links.email}
+          data-magnetic
+          onClick={() => sfx.playPop()}
+        >
+          Let’s talk <ArrowUpRight size={15} />
+        </a>
+
+        <button
+          className={`menu-toggle ${open ? "is-open" : ""}`}
+          aria-label={open ? "Close navigation menu" : "Open navigation menu"}
+          aria-expanded={open}
+          aria-controls="primary-navigation"
+          onClick={() => {
+            sfx.playSnap();
+            setOpen((prev) => !prev);
+          }}
+        >
+          <span className="menu-burger-box" aria-hidden="true">
+            <span className="burger-bar bar-top"></span>
+            <span className="burger-bar bar-mid"></span>
+            <span className="burger-bar bar-bot"></span>
+          </span>
+        </button>
+      </header>
+
+      {/* Backdrop overlay for mobile menu drawer */}
+      <div
+        className={`mobile-nav-backdrop ${open ? "open" : ""}`}
         onClick={() => {
-          sfx.playSnap();
-          setOpen(!open);
+          setOpen(false);
+          sfx.playPop();
         }}
-      >
-        {open ? <X /> : <Menu />}
-      </button>
-    </header>
+        aria-hidden="true"
+      />
+    </>
   );
 }
 
@@ -590,6 +724,8 @@ function App() {
                 <a
                   className="round-cta"
                   href="#work"
+                  data-offset="165"
+                  data-offset-mobile="125"
                   data-magnetic
                   onClick={() => sfx.playPop()}
                   data-cursor-text="WORK ↓"
@@ -976,8 +1112,6 @@ function App() {
                 <Github size={19} /> GitHub
               </a>
             </div>
-
-            <span className="copyright">© RAMAN BHARDWAJ</span>
           </div>
         </footer>
       </main>

@@ -145,9 +145,19 @@ export default function InteractiveCommandPalette({
       id: "open-deck",
       category: "STUDIO",
       title: "Open Studio Music Deck",
-      subtitle: "Explore FLAC playlist & upload songs",
+      subtitle: "Explore playlist & add songs (MP3, WAV, FLAC, etc.)",
       action: () => {
         onOpenDeck?.();
+        if (!musicState?.isPlaying) musicState?.togglePlay();
+      },
+    },
+    {
+      id: "open-fullscreen-deck",
+      category: "STUDIO",
+      title: "Open Fullscreen Music Studio",
+      subtitle: "Direct-drive 33⅓ RPM turntable & expanded playlist console",
+      action: () => {
+        musicState?.openFullScreen?.();
         if (!musicState?.isPlaying) musicState?.togglePlay();
       },
     },

@@ -1,12 +1,11 @@
 import React, { useState, useRef } from "react";
-import { ArrowUpRight, Asterisk, ChevronDown, ChevronUp, Cpu } from "lucide-react";
+import { ArrowUpRight, Asterisk } from "lucide-react";
 import { fireAwwwardsConfetti } from "./InteractiveHeroCanvas";
 import { sfx } from "../utils/sfx";
 
 export default function Project3DCard({ project, index }) {
   const cardRef = useRef(null);
   const [tilt, setTilt] = useState({ rotateX: 0, rotateY: 0, glareX: 50, glareY: 50, opacity: 0 });
-  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
 
   const handleMouseMove = (e) => {
     // Disable 3D tilt calculations on mobile touch devices
@@ -54,16 +53,10 @@ export default function Project3DCard({ project, index }) {
     fireAwwwardsConfetti(x, y);
   };
 
-  const toggleDetails = (e) => {
-    e.stopPropagation();
-    sfx.playSnap();
-    setIsDetailsOpen(!isDetailsOpen);
-  };
-
   return (
     <article
       ref={cardRef}
-      className={`project-card ${project.color} p${index} awwwards-tilt-card ${isDetailsOpen ? "details-open" : ""}`}
+      className={`project-card ${project.color} p${index} awwwards-tilt-card`}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
       style={{
@@ -104,39 +97,13 @@ export default function Project3DCard({ project, index }) {
         <span className="period">.</span>
       </h3>
       <h4>{project.headline}</h4>
-      <p>{project.description}</p>
+      <p className="project-description">{project.description}</p>
 
-      {/* Interactive Blueprint Drawer Toggle */}
-      {project.blueprints && (
-        <div className="project-blueprint-section">
-          <button
-            type="button"
-            className={`blueprint-toggle-btn ${isDetailsOpen ? "active" : ""}`}
-            onClick={toggleDetails}
-            aria-expanded={isDetailsOpen}
-            data-cursor="click"
-            data-cursor-text={isDetailsOpen ? "CLOSE" : "SYSTEM"}
-          >
-            <Cpu size={14} />
-            <span>{isDetailsOpen ? "Hide System Blueprint" : "Inspect System Blueprint"}</span>
-            {isDetailsOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-          </button>
-
-          {isDetailsOpen && (
-            <div className="blueprint-drawer">
-              <div className="blueprint-header">
-                <span className="blueprint-tag">CORE ARCHITECTURAL HIGHLIGHTS</span>
-              </div>
-              <ul className="blueprint-list">
-                {project.blueprints.map((item, bIdx) => (
-                  <li key={bIdx}>
-                    <span className="bp-num">0{bIdx + 1}</span>
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+      {/* Concise How I Did It Highlight */}
+      {project.howWeDidIt && (
+        <div className="project-how-block">
+          <span className="how-label">HOW I DID IT</span>
+          <p className="project-how-text">{project.howWeDidIt}</p>
         </div>
       )}
 

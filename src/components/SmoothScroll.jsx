@@ -11,13 +11,25 @@ export function getLenis() {
 }
 
 export function scrollToSection(selector, options = {}) {
+  const isMobile = typeof window !== "undefined" && window.innerWidth <= 480;
+  const isTablet = typeof window !== "undefined" && window.innerWidth <= 900;
+  const defaultOffset = selector === "#work" ? (isMobile ? 125 : isTablet ? 150 : 165) : 0;
+  const offset = options.offset !== undefined ? options.offset : defaultOffset;
+
   if (globalLenis) {
-    const offset = options.offset !== undefined ? options.offset : 0;
+    globalLenis.start();
     const duration = options.duration !== undefined ? options.duration : 1.2;
-    globalLenis.scrollTo(selector, { offset, duration });
+    globalLenis.scrollTo(selector, { offset, duration, force: true });
   } else {
     const el = document.querySelector(selector);
-    el?.scrollIntoView({ behavior: "smooth" });
+    if (el) {
+      if (offset !== 0) {
+        const y = el.getBoundingClientRect().top + window.scrollY - 90 + offset;
+        window.scrollTo({ top: Math.max(0, y), behavior: "smooth" });
+      } else {
+        el.scrollIntoView({ behavior: "smooth" });
+      }
+    }
   }
 }
 
@@ -67,7 +79,18 @@ export default function SmoothScroll() {
       if (href && href !== "#") {
         e.preventDefault();
         sfx.playPop();
-        const customOffset = anchor.dataset.offset !== undefined ? parseInt(anchor.dataset.offset, 10) : 0;
+        const w = window.innerWidth;
+        const isMobile = w <= 480;
+        const isTablet = w <= 900;
+        let customOffset = 0;
+        if (anchor.dataset.offset !== undefined) {
+          customOffset = parseInt(anchor.dataset.offset, 10);
+        } else if (href === "#work") {
+          customOffset = isMobile ? 125 : isTablet ? 150 : 165;
+        }
+        if (isMobile && anchor.dataset.offsetMobile !== undefined) {
+          customOffset = parseInt(anchor.dataset.offsetMobile, 10);
+        }
         lenis.scrollTo(href, { offset: customOffset, duration: 1.2 });
       }
     };
