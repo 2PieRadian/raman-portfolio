@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { extractAudioMetadata, detectFormatFromNameOrType, createFallbackCover } from "../utils/audioMetadata";
 import { sfx } from "../utils/sfx";
+import { getLenis } from "./SmoothScroll";
 
 // Default curated tracks with pre-extracted fallback covers from the audio files
 const DEFAULT_TRACKS = [
@@ -96,15 +97,23 @@ export default function MusicPlayer({ isDeckOpen, setIsDeckOpen, onPlayingStateC
     sfx.playSnap();
   };
 
-  // Lock background scroll only when expanded studio deck (Mode 3) is open
+  // Lock background scroll and pause Lenis so touch scrolling is native and unblocked
   useEffect(() => {
     if (!isFullScreen) return;
 
     const originalOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
 
+    const lenis = getLenis();
+    if (lenis) {
+      lenis.stop();
+    }
+
     return () => {
       document.body.style.overflow = originalOverflow;
+      if (lenis) {
+        lenis.start();
+      }
     };
   }, [isFullScreen]);
 
@@ -601,7 +610,6 @@ export default function MusicPlayer({ isDeckOpen, setIsDeckOpen, onPlayingStateC
                       draggable={false}
                       className="deck-sleeve-img"
                     />
-                    <div className="deck-sleeve-tag">EMBEDDED COVER ART</div>
                   </div>
                 </div>
 
@@ -741,9 +749,9 @@ export default function MusicPlayer({ isDeckOpen, setIsDeckOpen, onPlayingStateC
                     className={`deck-playlist-toggle ${showPlaylist ? "active" : ""}`}
                     onClick={() => {
                       sfx.playSnap();
-                      setShowPlaylist(!showPlaylist);
+                      setShowPlaylist((prev) => !prev);
                     }}
-                    aria-label="Toggle playlist drawer"
+                    aria-label="Toggle playlist modal"
                   >
                     <ListMusic size={15} /> Playlist ({tracks.length})
                   </button>
@@ -768,43 +776,97 @@ export default function MusicPlayer({ isDeckOpen, setIsDeckOpen, onPlayingStateC
                 </div>
               </div>
 
-              {/* PLAYLIST DRAWER */}
-              {showPlaylist && (
-                <div className="deck-playlist">
-                  <div className="playlist-heading">
-                    <span>SELECT TRACK</span>
-                    <small>AUTO-EXTRACTS COVER ART & METADATA</small>
+              {/* PLAYLIST BOTTOM MODAL (Slides up from the bottom with animation without expanding card height) */}
+              <div
+                className={`deck-playlist-modal ${showPlaylist ? "open" : ""}`}
+                aria-hidden={!showPlaylist}
+              >
+                <div className="deck-playlist-modal-header">
+                  <div className="deck-playlist-modal-title">
+                    <ListMusic size={14} />
+                    <span>PLAYLIST ({tracks.length})</span>
                   </div>
-                  <div className="playlist-items">
-                    {tracks.map((t, idx) => (
-                      <div
-                        key={t.id}
-                        className={`playlist-item ${idx === currentIndex ? "active" : ""}`}
-                        onClick={() => playTrack(idx, true)}
-                        role="button"
-                        tabIndex={0}
-                      >
-                        <span className="playlist-num">0{idx + 1}</span>
-                        <img
-                          src={t.coverUrl}
-                          alt={t.title}
-                          draggable={false}
-                          className="playlist-thumb"
-                        />
-                        <div className="playlist-info">
-                          <strong>{t.title}</strong>
-                          <span>{t.artist}</span>
-                        </div>
-                        {idx === currentIndex && isPlaying && (
-                          <span className="playlist-active-badge">
-                            <Asterisk size={12} className="spin-slow" /> PLAYING
-                          </span>
-                        )}
-                      </div>
-                    ))}
+                  <div className="deck-playlist-modal-actions">
+                    <button
+                      type="button"
+                      className="deck-playlist-modal-upload"
+                      onClick={() => compactFileInputRef.current?.click()}
+                      title="Add custom audio file"
+                      aria-label="Upload custom music file"
+                    >
+                      <Upload size={12} />
+                      <span>Add Song</span>
+                    </button>
+                    <button
+                      type="button"
+                      className="deck-playlist-modal-close"
+                      onClick={() => {
+                        sfx.playSnap();
+                        setShowPlaylist(false);
+                      }}
+                      title="Close playlist"
+                      aria-label="Close playlist"
+                    >
+                      <X size={15} />
+                    </button>
                   </div>
                 </div>
-              )}
+
+                <div className="deck-playlist-modal-items">
+                  {tracks.map((t, idx) => (
+                    <div
+                      key={t.id}
+                      className={`playlist-item ${idx === currentIndex ? "active" : ""}`}
+                      onClick={() => playTrack(idx, true)}
+                      role="button"
+                      tabIndex={showPlaylist ? 0 : -1}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          playTrack(idx, true);
+                        }
+                      }}
+                    >
+                      <span className="playlist-num">0{idx + 1}</span>
+                      <img
+                        src={t.coverUrl}
+                        alt={t.title}
+                        draggable={false}
+                        className="playlist-thumb"
+                      />
+                      <div className="playlist-info">
+                        <strong>{t.title}</strong>
+                        <span>{t.artist}</span>
+                      </div>
+                      {t.audioFormat && (
+                        <span className="playlist-format-pill">{t.audioFormat}</span>
+                      )}
+                      {idx === currentIndex && isPlaying && (
+                        <span className="playlist-active-badge">
+                          <Asterisk size={12} className="spin-slow" /> PLAYING
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                <div className="deck-playlist-modal-footer">
+                  <span className="deck-playlist-modal-status">
+                    0{currentIndex + 1} / 0{tracks.length} · {tracks[currentIndex]?.title}
+                  </span>
+                  <button
+                    type="button"
+                    className="deck-playlist-modal-back"
+                    onClick={() => {
+                      sfx.playSnap();
+                      setShowPlaylist(false);
+                    }}
+                    title="Close playlist and return to player"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
             </div>
           )}
         </aside>
@@ -904,7 +966,6 @@ export default function MusicPlayer({ isDeckOpen, setIsDeckOpen, onPlayingStateC
                           draggable={false}
                           className="studio-sleeve-img"
                         />
-                        <span className="studio-sleeve-pill">EMBEDDED COVER ART</span>
                       </div>
 
                       <div className={`studio-vinyl-disc ${isPlaying ? "spinning" : ""}`}>
