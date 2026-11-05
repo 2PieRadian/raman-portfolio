@@ -4053,6 +4053,7 @@ html.mobile-menu-open .nav.open {
         from {
             opacity: 0;
         }
+
         to {
             opacity: 1;
         }
@@ -4103,6 +4104,7 @@ html.mobile-menu-open .nav.open {
         from {
             transform: translateY(100%);
         }
+
         to {
             transform: translateY(0);
         }

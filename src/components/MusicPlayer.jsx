@@ -12,7 +12,6 @@ import {
   Repeat1,
   ChevronDown,
   ChevronUp,
-  Music,
   Upload,
   ListMusic,
   X,
@@ -24,33 +23,59 @@ import { extractAudioMetadata, detectFormatFromNameOrType, createFallbackCover }
 import { sfx } from "../utils/sfx";
 import { getLenis } from "./SmoothScroll";
 
-// Default curated tracks with pre-extracted fallback covers from the audio files
-const DEFAULT_TRACKS = [
-  {
+// Curated metadata dictionary for tracks in public/music
+const CURATED_METADATA = {
+  "melomance-love-maybe.flac": {
     id: "melomance-love-maybe",
     title: "Love, Maybe",
     artist: "MeloMance",
     album: "LOVE, MAYBE (A BUSINESS PROPOSAL OST SP.. 2022",
     date: "2022",
     audioSrc: "/music/melomance-love-maybe.flac",
-    fallbackCover: "/music/covers/melomance-love-maybe.jpg",
-    coverUrl: "/music/covers/melomance-love-maybe.jpg",
+    fallbackCover: "/covers/melomance-love-maybe.jpg",
+    coverUrl: "/covers/melomance-love-maybe.jpg",
     accent: "lime",
     format: "FLAC 24-BIT",
   },
-  {
+  "tracy-chapman-fast-car.flac": {
     id: "tracy-chapman-fast-car",
     title: "Fast Car (2015 Remaster)",
     artist: "Tracy Chapman",
     album: "TRACY CHAPMAN (ELEKTRA RECORDS) · 1988",
     date: "2015",
     audioSrc: "/music/tracy-chapman-fast-car.flac",
-    fallbackCover: "/music/covers/tracy-chapman-fast-car.jpg",
-    coverUrl: "/music/covers/tracy-chapman-fast-car.jpg",
+    fallbackCover: "/covers/tracy-chapman-fast-car.jpg",
+    coverUrl: "/covers/tracy-chapman-fast-car.jpg",
     accent: "coral",
     format: "FLAC 16-BIT",
   },
-];
+  "Finding Solace.wav": {
+    id: "finding-solace",
+    title: "Finding Solace",
+    artist: "Solace",
+    album: "FINDING SOLACE (ORIGINAL SOUNDTRACK)",
+    date: "2026",
+    audioSrc: "/music/Finding Solace.wav",
+    fallbackCover: createFallbackCover("Finding Solace", "Solace", "WAV"),
+    coverUrl: createFallbackCover("Finding Solace", "Solace", "WAV"),
+    accent: "lilac",
+    format: "WAV 16-BIT",
+  },
+  "Turning Pages.wav": {
+    id: "turning-pages",
+    title: "Turning Pages",
+    artist: "Sleeping At Last",
+    album: "TURNING PAGES (SOUNDTRACK)",
+    date: "2026",
+    audioSrc: "/music/Turning Pages.wav",
+    fallbackCover: createFallbackCover("Turning Pages", "Sleeping At Last", "WAV"),
+    coverUrl: createFallbackCover("Turning Pages", "Sleeping At Last", "WAV"),
+    accent: "lime",
+    format: "WAV 16-BIT",
+  },
+};
+
+const DEFAULT_TRACKS = Object.values(CURATED_METADATA);
 
 const WAVE_BARS = [
   6, 8, 12, 10, 14, 18, 22, 26, 28, 32, 29, 34, 30, 26, 24, 22,
@@ -544,7 +569,7 @@ export default function MusicPlayer({ isDeckOpen, setIsDeckOpen, onPlayingStateC
               {/* Top Header Bar */}
               <div className="deck-header">
                 <div className="deck-eyebrow">
-                  <Asterisk size={14} /> RAMAN'S STUDIO DECK · 0{currentIndex + 1} / 0{tracks.length}
+                  <Asterisk size={14} /> NOW PLAYING · 0{currentIndex + 1} / 0{tracks.length}
                 </div>
                 <div className="deck-actions">
                   <span className="deck-pill-tag">
@@ -894,7 +919,7 @@ export default function MusicPlayer({ isDeckOpen, setIsDeckOpen, onPlayingStateC
           data-lenis-prevent="true"
           role="dialog"
           aria-modal="true"
-          aria-label="Raman's Studio Deck"
+          aria-label="Now Playing - Studio Deck"
         >
           <div
             className="studio-deck-card"
@@ -920,7 +945,7 @@ export default function MusicPlayer({ isDeckOpen, setIsDeckOpen, onPlayingStateC
                 <div className="studio-top-title-badge">
                   <span className="deck-star">✱</span>
                   <span>
-                    RAMAN'S STUDIO DECK · 0{currentIndex + 1} / 0{tracks.length}
+                    NOW PLAYING · 0{currentIndex + 1} / 0{tracks.length}
                   </span>
                 </div>
 
@@ -1161,15 +1186,6 @@ export default function MusicPlayer({ isDeckOpen, setIsDeckOpen, onPlayingStateC
                       style={{ display: "none" }}
                       onChange={handleFileUpload}
                     />
-
-                    <button
-                      type="button"
-                      className="studio-pill-action"
-                      onClick={() => sfx.playChime()}
-                    >
-                      <Music size={14} />
-                      <span>Library</span>
-                    </button>
                   </div>
                 </div>
               </div>
