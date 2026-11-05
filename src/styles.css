@@ -4194,7 +4194,9 @@ html.mobile-menu-open .nav.open {
         display: flex !important;
         flex-direction: column !important;
         flex: 1 0 auto !important;
-        min-height: auto !important;
+        min-height: calc(100% - 60px) !important;
+        justify-content: center !important;
+        align-items: center !important;
         overflow: visible !important;
         width: 100% !important;
         box-sizing: border-box !important;
@@ -4205,10 +4207,15 @@ html.mobile-menu-open .nav.open {
         flex-direction: column !important;
         flex: none !important;
         width: 100% !important;
+        margin-top: auto !important;
+        margin-bottom: auto !important;
+        justify-content: center !important;
+        align-items: center !important;
         overflow: visible !important;
         padding: 20px 16px 28px !important;
+        padding-bottom: max(28px, env(safe-area-inset-bottom, 20px)) !important;
         box-sizing: border-box !important;
-        gap: 16px !important;
+        gap: 14px !important;
     }
 
     .studio-hero-row {
@@ -4223,13 +4230,14 @@ html.mobile-menu-open .nav.open {
         flex-direction: column !important;
         align-items: center !important;
         text-align: center !important;
-        gap: 14px !important;
+        gap: 22px !important;
         width: 100% !important;
     }
 
     /* Responsive vinyl sizing */
     .studio-vinyl-assembly {
         margin-right: 48px !important;
+        margin-bottom: 6px !important;
     }
 
     .studio-sleeve {
@@ -4259,6 +4267,7 @@ html.mobile-menu-open .nav.open {
     .studio-track-info-col {
         align-items: center !important;
         text-align: center !important;
+        margin-top: 4px !important;
     }
 
     .studio-album-eyebrow {
@@ -4283,7 +4292,7 @@ html.mobile-menu-open .nav.open {
     .studio-wave-container {
         gap: 4px !important;
         height: 42px !important;
-        margin: 4px 0 10px !important;
+        margin: 20px 0 22px !important;
         overflow: visible !important;
         max-width: 100% !important;
     }
