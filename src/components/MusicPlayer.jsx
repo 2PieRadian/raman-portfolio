@@ -65,6 +65,17 @@ const WAVE_BARS = [
   22, 24, 26, 30, 34, 29, 32, 28, 26, 22, 18, 14, 10, 12, 8, 6,
 ];
 
+// Precomputed frequency bin indices for 32 Studio Deck bars (musical range ~50Hz - 4200Hz, fftSize = 512)
+const STUDIO_BIN_INDICES = [
+  1, 2, 2, 3, 3, 4, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15,
+  17, 19, 21, 23, 26, 29, 32, 35, 38, 41, 44, 47, 50, 53, 56, 60,
+];
+
+// Precomputed frequency bin indices for 18 Compact Deck bars (musical range ~60Hz - 2150Hz, fftSize = 512)
+const COMPACT_BIN_INDICES = [
+  1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 18, 20, 23,
+];
+
 function formatTime(seconds) {
   if (isNaN(seconds) || seconds < 0) return "0:00";
   const mins = Math.floor(seconds / 60);
@@ -99,6 +110,34 @@ export default function MusicPlayer({ isDeckOpen, setIsDeckOpen, onPlayingStateC
   const dockRef = useRef(null);
   const isTransitioningRef = useRef(false);
   const currentTrack = tracks[currentIndex] || tracks[0] || EMPTY_TRACK;
+
+  // Web Audio API live reactive music analyser refs
+  const audioContextRef = useRef(null);
+  const analyserRef = useRef(null);
+  const gainNodeRef = useRef(null);
+  const sourceNodeRef = useRef(null);
+  const freqDataRef = useRef(null);
+  const mediaSourceConnectedRef = useRef(false);
+
+  // Visualizer bar element refs
+  const studioBarsRef = useRef([]);
+  const compactBarsRef = useRef([]);
+  const miniBarsRef = useRef([]);
+  const playlistWaveBarsRef = useRef([]);
+
+  // Exponentially smoothed amplitude levels for organic wave physics
+  const studioLevelsRef = useRef(new Float32Array(32));
+  const compactLevelsRef = useRef(new Float32Array(18));
+  const miniLevelsRef = useRef(new Float32Array(4));
+  const playlistLevelsRef = useRef(new Float32Array(3));
+  const animFrameRef = useRef(null);
+  const isPlayingRef = useRef(isPlaying);
+  isPlayingRef.current = isPlaying;
+  const volumeRef = useRef(volume);
+  volumeRef.current = volume;
+  const isMutedRef = useRef(isMuted);
+  isMutedRef.current = isMuted;
+  const peakTrackerRef = useRef(180);
 
   // Tonearm state & drag interaction (Mode 3: Expanded Studio Deck only)
   const [isDraggingTonearm, setIsDraggingTonearm] = useState(false);
@@ -286,10 +325,265 @@ export default function MusicPlayer({ isDeckOpen, setIsDeckOpen, onPlayingStateC
     });
   }, [isPlaying, currentIndex, currentTrack]);
 
-  // Update HTML audio volume when state changes
+  // Initialize Web Audio API Analyser for live frequency reactivity
+  const initAudioAnalyser = () => {
+    if (mediaSourceConnectedRef.current || !audioRef.current) return;
+
+    try {
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContextClass) return;
+
+      const ctx = audioContextRef.current || new AudioContextClass();
+      audioContextRef.current = ctx;
+
+      const analyser = ctx.createAnalyser();
+      analyser.fftSize = 512;
+      analyser.smoothingTimeConstant = 0.45;
+      analyser.minDecibels = -90;
+      analyser.maxDecibels = -5;
+      analyserRef.current = analyser;
+
+      const gain = ctx.createGain();
+      gain.gain.value = isMuted ? 0 : volume;
+      gainNodeRef.current = gain;
+
+      // Connect: <audio> element -> analyser -> gain -> audioContext.destination
+      const source = ctx.createMediaElementSource(audioRef.current);
+      sourceNodeRef.current = source;
+      source.connect(analyser);
+      analyser.connect(gain);
+      gain.connect(ctx.destination);
+
+      mediaSourceConnectedRef.current = true;
+      if (audioRef.current) {
+        audioRef.current.volume = 1;
+      }
+      freqDataRef.current = new Uint8Array(analyser.frequencyBinCount);
+
+      if (ctx.state === "suspended") {
+        ctx.resume().catch(() => { });
+      }
+    } catch (err) {
+      console.warn("Web Audio live analyser setup:", err);
+    }
+  };
+
+  // High-performance direct DOM visualizer updater driving waves live to audio frequencies & amplitude
+  const updateVisualizers = () => {
+    const currentlyPlaying = isPlayingRef.current;
+    const analyser = analyserRef.current;
+    const data = freqDataRef.current;
+
+    if (analyser && data) {
+      analyser.getByteFrequencyData(data);
+    }
+
+    // Dynamic crest-factor tracking: tracks instantaneous audio power
+    // Adapts seamlessly to any mastering loudness so bars never saturate or freeze at higher volumes
+    let framePeak = 0;
+    if (data && currentlyPlaying) {
+      for (let b = 1; b < 60; b++) {
+        if (data[b] > framePeak) framePeak = data[b];
+      }
+    }
+    peakTrackerRef.current = Math.max(130, Math.max(peakTrackerRef.current * 0.985, framePeak));
+    const dynamicCeiling = peakTrackerRef.current;
+
+    // 1. Mode 3: Studio Waveform (32 bars - real audio reactivity across frequency & amplitude)
+    const studioBars = studioBarsRef.current;
+    if (studioBars && studioBars.length > 0) {
+      for (let i = 0; i < 32; i++) {
+        const bar = studioBars[i];
+        if (!bar) continue;
+
+        const bin = STUDIO_BIN_INDICES[i] || (i + 1);
+        const raw = (data && currentlyPlaying)
+          ? Math.max(
+            data[bin] || 0,
+            data[bin - 1] || 0,
+            data[bin + 1] || 0
+          )
+          : 0;
+
+        // Equal-loudness acoustic curve: gentle tilt across musical registers
+        const progress = i / (32 - 1);
+        const tilt = 1.0 + Math.pow(progress, 0.65) * 1.5;
+        // Dynamic normalization: guarantees lively motion without clipping or freezing
+        const energy = Math.min(1.0, (raw / dynamicCeiling) * tilt);
+
+        // Fast responsive attack (0.68) for crisp punch, natural decay (0.22)
+        const prev = studioLevelsRef.current[i] || 0;
+        const smoothed = prev + (energy - prev) * (energy > prev ? 0.68 : 0.22);
+        studioLevelsRef.current[i] = smoothed;
+
+        // Live amplitude & frequency scaling:
+        // Gentle resting state (~0.20), expands up to 2.2x on energetic audio passages
+        const minScale = 0.20;
+        const scale = currentlyPlaying
+          ? minScale + Math.pow(smoothed, 1.25) * 2.05
+          : minScale;
+        bar.style.transform = `scaleY(${scale.toFixed(3)})`;
+        bar.style.opacity = currentlyPlaying ? (0.7 + smoothed * 0.3).toFixed(2) : "0.5";
+      }
+    }
+
+    // 2. Mode 2: Compact Deck Bars (18 bars - small & contained height, dynamic live response)
+    const compactBars = compactBarsRef.current;
+    if (compactBars && compactBars.length > 0) {
+      for (let i = 0; i < 18; i++) {
+        const bar = compactBars[i];
+        if (!bar) continue;
+
+        const bin = COMPACT_BIN_INDICES[i] || (i + 1);
+        const raw = (data && currentlyPlaying)
+          ? Math.max(
+            data[bin] || 0,
+            data[bin - 1] || 0,
+            data[bin + 1] || 0
+          )
+          : 0;
+
+        const progress = i / (18 - 1);
+        const tilt = 1.0 + Math.pow(progress, 0.65) * 1.35;
+        const energy = Math.min(1.0, (raw / dynamicCeiling) * tilt);
+
+        const prev = compactLevelsRef.current[i] || 0;
+        const smoothed = prev + (energy - prev) * (energy > prev ? 0.68 : 0.22);
+        compactLevelsRef.current[i] = smoothed;
+
+        // In compact mode: base height is 8px.
+        // Resting scale: 0.25 (~2.0px). Peak scale: 0.70 (~5.6px max).
+        const minScale = 0.25;
+        const scale = currentlyPlaying ? minScale + smoothed * 0.45 : minScale;
+        bar.style.transform = `scaleY(${scale.toFixed(3)})`;
+      }
+    }
+
+    // 3. Mode 1: Mini Equalizer (4 bars)
+    const miniBars = miniBarsRef.current;
+    if (miniBars && miniBars.length >= 4) {
+      const b1 = (data && currentlyPlaying) ? Math.max(data[1] || 0, data[2] || 0) / dynamicCeiling * 1.2 : 0;
+      const b2 = (data && currentlyPlaying) ? Math.max(data[4] || 0, data[6] || 0) / dynamicCeiling * 1.5 : 0;
+      const b3 = (data && currentlyPlaying) ? Math.max(data[9] || 0, data[12] || 0) / dynamicCeiling * 1.8 : 0;
+      const b4 = (data && currentlyPlaying) ? Math.max(data[16] || 0, data[22] || 0) / dynamicCeiling * 2.2 : 0;
+      const bands = [Math.min(1, b1), Math.min(1, b2), Math.min(1, b3), Math.min(1, b4)];
+
+      for (let i = 0; i < 4; i++) {
+        const bar = miniBars[i];
+        if (!bar) continue;
+        const target = bands[i];
+        const prev = miniLevelsRef.current[i] || 0;
+        const smoothed = prev + (target - prev) * (target > prev ? 0.68 : 0.22);
+        miniLevelsRef.current[i] = smoothed;
+
+        const h = currentlyPlaying ? Math.max(3, Math.min(16, Math.round(3 + smoothed * 13))) : 3;
+        bar.style.height = `${h}px`;
+      }
+    }
+
+    // 4. Playlist active track wave icon (3 bars)
+    const playlistWaveBars = playlistWaveBarsRef.current;
+    if (playlistWaveBars && playlistWaveBars.length >= 3) {
+      const pw1 = (data && currentlyPlaying) ? (Math.max(data[2] || 0, data[3] || 0) / dynamicCeiling) * 1.3 : 0;
+      const pw2 = (data && currentlyPlaying) ? (Math.max(data[6] || 0, data[9] || 0) / dynamicCeiling) * 1.6 : 0;
+      const pw3 = (data && currentlyPlaying) ? (Math.max(data[15] || 0, data[20] || 0) / dynamicCeiling) * 2.0 : 0;
+      const pwBands = [Math.min(1, pw1), Math.min(1, pw2), Math.min(1, pw3)];
+
+      for (let i = 0; i < 3; i++) {
+        const bar = playlistWaveBars[i];
+        if (!bar) continue;
+        const target = pwBands[i];
+        const prev = playlistLevelsRef.current[i] || 0;
+        const smoothed = prev + (target - prev) * (target > prev ? 0.68 : 0.22);
+        playlistLevelsRef.current[i] = smoothed;
+
+        const h = currentlyPlaying ? Math.max(3, Math.min(14, Math.round(3 + smoothed * 11))) : 4;
+        bar.style.height = `${h}px`;
+      }
+    }
+
+    if (currentlyPlaying) {
+      animFrameRef.current = requestAnimationFrame(updateVisualizers);
+    } else {
+      let stillSettling = false;
+      for (let i = 0; i < 32; i++) {
+        if ((studioLevelsRef.current[i] || 0) > 0.01) {
+          stillSettling = true;
+          break;
+        }
+      }
+      if (stillSettling) {
+        animFrameRef.current = requestAnimationFrame(updateVisualizers);
+      } else {
+        animFrameRef.current = null;
+      }
+    }
+  };
+
+  // Unlock AudioContext on first user interaction anywhere
   useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.volume = isMuted ? 0 : volume;
+    const handleFirstGesture = () => {
+      initAudioAnalyser();
+      if (audioContextRef.current && audioContextRef.current.state === "suspended") {
+        audioContextRef.current.resume().catch(() => { });
+      }
+      window.removeEventListener("pointerdown", handleFirstGesture);
+      window.removeEventListener("keydown", handleFirstGesture);
+    };
+
+    window.addEventListener("pointerdown", handleFirstGesture, { passive: true });
+    window.addEventListener("keydown", handleFirstGesture, { passive: true });
+
+    return () => {
+      window.removeEventListener("pointerdown", handleFirstGesture);
+      window.removeEventListener("keydown", handleFirstGesture);
+      if (animFrameRef.current) {
+        cancelAnimationFrame(animFrameRef.current);
+      }
+    };
+  }, []);
+
+  // Start or resume visualizer frame loop whenever isPlaying changes
+  useEffect(() => {
+    isPlayingRef.current = isPlaying;
+    if (isPlaying) {
+      initAudioAnalyser();
+      if (audioContextRef.current && audioContextRef.current.state === "suspended") {
+        audioContextRef.current.resume().catch(() => { });
+      }
+      if (!animFrameRef.current) {
+        animFrameRef.current = requestAnimationFrame(updateVisualizers);
+      }
+    } else {
+      if (!animFrameRef.current) {
+        animFrameRef.current = requestAnimationFrame(updateVisualizers);
+      }
+    }
+
+    return () => {
+      if (animFrameRef.current) {
+        cancelAnimationFrame(animFrameRef.current);
+        animFrameRef.current = null;
+      }
+    };
+  }, [isPlaying]);
+
+  // Update HTML audio volume and Web Audio gain node
+  useEffect(() => {
+    volumeRef.current = volume;
+    isMutedRef.current = isMuted;
+    const targetVol = isMuted ? 0 : volume;
+    if (mediaSourceConnectedRef.current) {
+      if (audioRef.current) {
+        audioRef.current.volume = 1;
+      }
+      if (gainNodeRef.current) {
+        gainNodeRef.current.gain.value = targetVol;
+      }
+    } else {
+      if (audioRef.current) {
+        audioRef.current.volume = targetVol;
+      }
     }
   }, [volume, isMuted]);
 
@@ -326,14 +620,14 @@ export default function MusicPlayer({ isDeckOpen, setIsDeckOpen, onPlayingStateC
               prev.map((t, i) =>
                 i === idx
                   ? {
-                      ...t,
-                      coverUrl: meta.coverUrl || t.coverUrl,
-                      title: meta.title?.trim() || t.title,
-                      artist: meta.artist?.trim() || t.artist,
-                      album: meta.album?.trim() || t.album,
-                      date: meta.date?.trim() || t.date,
-                      format: meta.format || t.format,
-                    }
+                    ...t,
+                    coverUrl: meta.coverUrl || t.coverUrl,
+                    title: meta.title?.trim() || t.title,
+                    artist: meta.artist?.trim() || t.artist,
+                    album: meta.album?.trim() || t.album,
+                    date: meta.date?.trim() || t.date,
+                    format: meta.format || t.format,
+                  }
                   : t
               )
             );
@@ -354,6 +648,11 @@ export default function MusicPlayer({ isDeckOpen, setIsDeckOpen, onPlayingStateC
   const playTrackWithList = (index, trackList = tracks, shouldPlay = true) => {
     const nextTrack = trackList[index];
     if (!nextTrack || !nextTrack.audioSrc || !audioRef.current) return;
+
+    initAudioAnalyser();
+    if (audioContextRef.current && audioContextRef.current.state === "suspended") {
+      audioContextRef.current.resume().catch(() => { });
+    }
 
     setCurrentIndex(index);
     setCurrentTime(0);
@@ -412,6 +711,10 @@ export default function MusicPlayer({ isDeckOpen, setIsDeckOpen, onPlayingStateC
     if (!currentTrack || !currentTrack.audioSrc) return;
 
     sfx.playSnap();
+    initAudioAnalyser();
+    if (audioContextRef.current && audioContextRef.current.state === "suspended") {
+      audioContextRef.current.resume().catch(() => { });
+    }
 
     if (!audio.src && currentTrack) {
       audio.src = currentTrack.audioSrc;
@@ -572,10 +875,17 @@ export default function MusicPlayer({ isDeckOpen, setIsDeckOpen, onPlayingStateC
         ref={audioRef}
         src={currentTrack.audioSrc}
         preload="metadata"
+        crossOrigin="anonymous"
         onTimeUpdate={handleTimeUpdate}
         onLoadedMetadata={handleLoadedMetadata}
         onEnded={handleEnded}
-        onPlay={() => setIsPlaying(true)}
+        onPlay={() => {
+          setIsPlaying(true);
+          initAudioAnalyser();
+          if (audioContextRef.current && audioContextRef.current.state === "suspended") {
+            audioContextRef.current.resume().catch(() => { });
+          }
+        }}
         onPause={() => {
           if (!isTransitioningRef.current) {
             setIsPlaying(false);
@@ -640,12 +950,12 @@ export default function MusicPlayer({ isDeckOpen, setIsDeckOpen, onPlayingStateC
                 </div>
               </div>
 
-              {/* EQ Animated Bars */}
+              {/* EQ Animated Bars - Web Audio reactive */}
               <div className={`mini-eq ${isPlaying ? "eq-active" : ""}`} aria-hidden="true">
-                <span className="eq-bar b1" />
-                <span className="eq-bar b2" />
-                <span className="eq-bar b3" />
-                <span className="eq-bar b4" />
+                <span ref={(el) => (miniBarsRef.current[0] = el)} className="eq-bar b1" />
+                <span ref={(el) => (miniBarsRef.current[1] = el)} className="eq-bar b2" />
+                <span ref={(el) => (miniBarsRef.current[2] = el)} className="eq-bar b3" />
+                <span ref={(el) => (miniBarsRef.current[3] = el)} className="eq-bar b4" />
               </div>
 
               {/* Quick Play/Pause button */}
@@ -769,17 +1079,14 @@ export default function MusicPlayer({ isDeckOpen, setIsDeckOpen, onPlayingStateC
                   <h3 className="deck-song-name">{currentTrack.title}</h3>
                   <h4 className="deck-artist-name">{currentTrack.artist}</h4>
 
-                  {/* Visualizer graphic bars */}
+                  {/* Visualizer graphic bars - Web Audio reactive */}
                   <div className="deck-waveform" aria-hidden="true">
                     <div className={`deck-eq-bars ${isPlaying ? "active" : ""}`}>
                       {[...Array(18)].map((_, i) => (
                         <span
                           key={i}
+                          ref={(el) => (compactBarsRef.current[i] = el)}
                           className="deck-eq-bar"
-                          style={{
-                            animationDelay: `${(i % 6) * 0.12}s`,
-                            height: isPlaying ? undefined : "4px",
-                          }}
                         />
                       ))}
                     </div>
@@ -1198,7 +1505,7 @@ export default function MusicPlayer({ isDeckOpen, setIsDeckOpen, onPlayingStateC
                   </div>
                 </div>
 
-                {/* Coral Soundwave Visualizer */}
+                {/* Coral Soundwave Visualizer - Web Audio reactive */}
                 <div
                   className={`studio-wave-container ${isPlaying ? "playing" : ""}`}
                   aria-hidden="true"
@@ -1206,11 +1513,10 @@ export default function MusicPlayer({ isDeckOpen, setIsDeckOpen, onPlayingStateC
                   {WAVE_BARS.map((h, i) => (
                     <span
                       key={i}
+                      ref={(el) => (studioBarsRef.current[i] = el)}
                       className="studio-wave-bar"
                       style={{
                         "--bar-h": `${h}px`,
-                        animationDelay: `${(i % 7) * 0.1}s`,
-                        animationDuration: `${0.75 + (i % 4) * 0.15}s`,
                       }}
                     />
                   ))}
@@ -1425,9 +1731,9 @@ export default function MusicPlayer({ isDeckOpen, setIsDeckOpen, onPlayingStateC
                             >
                               {isActive ? (
                                 <div className="sidebar-item-wave-icon playing" aria-hidden="true">
-                                  <span className="si-bar" />
-                                  <span className="si-bar" style={{ animationDelay: "0.2s" }} />
-                                  <span className="si-bar" style={{ animationDelay: "0.4s" }} />
+                                  <span ref={(el) => (playlistWaveBarsRef.current[0] = el)} className="si-bar" />
+                                  <span ref={(el) => (playlistWaveBarsRef.current[1] = el)} className="si-bar" />
+                                  <span ref={(el) => (playlistWaveBarsRef.current[2] = el)} className="si-bar" />
                                 </div>
                               ) : (
                                 <span className="sidebar-track-num">

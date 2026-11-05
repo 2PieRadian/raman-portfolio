@@ -1877,22 +1877,24 @@ html.mobile-menu-open .nav.open {
     height: 4px;
     background: var(--ink);
     border-radius: 1px;
-    transition: height .2s ease;
+    transform-origin: bottom;
+    transition: height .08s ease-out;
+    will-change: height;
 }
 
-.mini-eq.eq-active .b1 {
+.mini-eq.fallback-anim.eq-active .b1 {
     animation: eq-dance .6s ease-in-out infinite alternate;
 }
 
-.mini-eq.eq-active .b2 {
+.mini-eq.fallback-anim.eq-active .b2 {
     animation: eq-dance .8s ease-in-out infinite alternate .2s;
 }
 
-.mini-eq.eq-active .b3 {
+.mini-eq.fallback-anim.eq-active .b3 {
     animation: eq-dance .7s ease-in-out infinite alternate .35s;
 }
 
-.mini-eq.eq-active .b4 {
+.mini-eq.fallback-anim.eq-active .b4 {
     animation: eq-dance .9s ease-in-out infinite alternate .15s;
 }
 
@@ -2323,10 +2325,10 @@ html.mobile-menu-open .nav.open {
 
 /* Waveform Graphic */
 .deck-waveform {
-    height: 20px;
+    height: 10px;
     display: flex;
     align-items: center;
-    margin-bottom: 8px;
+    margin: 4px 0 8px;
 }
 
 .deck-eq-bars {
@@ -2339,14 +2341,20 @@ html.mobile-menu-open .nav.open {
 
 .deck-eq-bar {
     flex: 1;
-    height: 4px;
-    background: color-mix(in srgb, var(--ink) 40%, transparent);
-    border-radius: 2px;
-    transition: height .2s, background .2s;
+    height: 8px;
+    background: color-mix(in srgb, var(--ink) 35%, transparent);
+    border-radius: 1px;
+    transform-origin: center;
+    transform: scaleY(0.25);
+    transition: background .2s, transform .04s ease-out;
+    will-change: transform;
 }
 
 .deck-eq-bars.active .deck-eq-bar {
     background: var(--coral);
+}
+
+.deck-eq-bars.fallback-anim.active .deck-eq-bar {
     animation: wave-bounce 1s ease-in-out infinite alternate;
 }
 
@@ -2888,15 +2896,15 @@ html.mobile-menu-open .nav.open {
 
 @keyframes wave-bounce {
     0% {
-        height: 4px;
+        transform: scaleY(0.25);
     }
 
     50% {
-        height: 18px;
+        transform: scaleY(0.75);
     }
 
     100% {
-        height: 8px;
+        transform: scaleY(0.4);
     }
 }
 
@@ -3610,8 +3618,9 @@ html.mobile-menu-open .nav.open {
     align-items: center;
     justify-content: center;
     gap: 6.5px;
-    height: 44px;
+    height: 56px;
     margin: 8px 0 16px;
+    overflow: visible;
 }
 
 .studio-wave-bar {
@@ -3619,11 +3628,13 @@ html.mobile-menu-open .nav.open {
     background: #ff6358;
     border-radius: 3px;
     transform-origin: center;
-    height: var(--bar-h, 14px);
-    transition: height 0.2s ease;
+    height: var(--bar-h, 16px);
+    transform: scaleY(0.22);
+    transition: transform 0.04s ease-out, opacity 0.06s ease-out;
+    will-change: transform;
 }
 
-.studio-wave-container.playing .studio-wave-bar {
+.studio-wave-container.fallback-anim.playing .studio-wave-bar {
     animation: studioWavePulse 0.9s ease-in-out infinite alternate;
 }
 
@@ -3962,10 +3973,13 @@ html.mobile-menu-open .nav.open {
     width: 2.5px;
     background: var(--ink);
     border-radius: 1px;
-    height: 6px;
+    height: 4px;
+    transform-origin: bottom;
+    transition: height 0.08s ease-out;
+    will-change: height;
 }
 
-.sidebar-item-wave-icon.playing .si-bar {
+.sidebar-item-wave-icon.fallback-anim.playing .si-bar {
     animation: eq-dance 0.75s ease-in-out infinite alternate;
 }
 
@@ -4260,9 +4274,9 @@ html.mobile-menu-open .nav.open {
 
     .studio-wave-container {
         gap: 4px !important;
-        height: 34px !important;
+        height: 42px !important;
         margin: 4px 0 10px !important;
-        overflow: hidden !important;
+        overflow: visible !important;
         max-width: 100% !important;
     }
 
