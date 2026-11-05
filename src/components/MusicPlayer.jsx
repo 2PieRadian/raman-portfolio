@@ -65,6 +65,12 @@ const WAVE_BARS = [
   22, 24, 26, 30, 34, 29, 32, 28, 26, 22, 18, 14, 10, 12, 8, 6,
 ];
 
+// Precomputed mobile waveform bars (pure linear static animation decoupled from Web Audio feed)
+const MOBILE_WAVE_BARS = WAVE_BARS.map((h, i) => ({
+  height: h,
+  delay: `-${(i * 0.0875).toFixed(4)}s`,
+}));
+
 // Precomputed frequency bin ranges for 32 Studio Deck bars (20Hz - 16,000Hz, fftSize = 1024)
 // Mapped logarithmically across the 3 core musical bands:
 // Bars 0-7: Bass band (20 - 250 Hz)
@@ -1404,14 +1410,28 @@ export default function MusicPlayer({ isDeckOpen, setIsDeckOpen, onPlayingStateC
                   <h3 className="deck-song-name">{currentTrack.title}</h3>
                   <h4 className="deck-artist-name">{currentTrack.artist}</h4>
 
-                  {/* Visualizer graphic bars - Web Audio reactive */}
+                  {/* Visualizer graphic bars - Web Audio reactive on desktop, linear static animation on mobile */}
                   <div ref={compactWaveContainerRef} className="deck-waveform" aria-hidden="true">
-                    <div className={`deck-eq-bars ${isPlaying ? "active" : ""}`}>
+                    {/* Desktop: Real-time Web Audio API frequency feed */}
+                    <div className={`deck-eq-bars deck-eq-desktop ${isPlaying ? "active" : ""}`}>
                       {[...Array(18)].map((_, i) => (
                         <span
                           key={i}
                           ref={(el) => (compactBarsRef.current[i] = el)}
                           className="deck-eq-bar"
+                        />
+                      ))}
+                    </div>
+
+                    {/* Mobile: Independent static linear animation (no audio feed dependency) */}
+                    <div className={`deck-eq-bars deck-eq-mobile ${isPlaying ? "active playing" : "paused"}`}>
+                      {[...Array(18)].map((_, i) => (
+                        <span
+                          key={i}
+                          className="deck-eq-bar deck-mobile-eq-bar"
+                          style={{
+                            "--deck-bar-delay": `-${(i * 0.0667).toFixed(4)}s`,
+                          }}
                         />
                       ))}
                     </div>
@@ -1830,10 +1850,11 @@ export default function MusicPlayer({ isDeckOpen, setIsDeckOpen, onPlayingStateC
                   </div>
                 </div>
 
-                {/* Coral Soundwave Visualizer - Web Audio reactive */}
+                {/* Coral Soundwave Visualizer */}
+                {/* Desktop: Web Audio reactive real-time feed */}
                 <div
                   ref={studioWaveContainerRef}
-                  className={`studio-wave-container ${isPlaying ? "playing" : ""}`}
+                  className={`studio-wave-container studio-wave-desktop ${isPlaying ? "playing" : ""}`}
                   aria-hidden="true"
                 >
                   {WAVE_BARS.map((h, i) => (
@@ -1843,6 +1864,23 @@ export default function MusicPlayer({ isDeckOpen, setIsDeckOpen, onPlayingStateC
                       className="studio-wave-bar"
                       style={{
                         "--bar-h": `${h}px`,
+                      }}
+                    />
+                  ))}
+                </div>
+
+                {/* Mobile: Dedicated independent waveform with static linear animation (no audio feed dependency) */}
+                <div
+                  className={`studio-wave-container studio-wave-mobile ${isPlaying ? "playing" : "paused"}`}
+                  aria-hidden="true"
+                >
+                  {MOBILE_WAVE_BARS.map((bar, i) => (
+                    <span
+                      key={i}
+                      className="studio-mobile-wave-bar"
+                      style={{
+                        "--bar-h": `${bar.height}px`,
+                        "--bar-delay": bar.delay,
                       }}
                     />
                   ))}

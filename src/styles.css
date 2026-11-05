@@ -2358,6 +2358,53 @@ html.mobile-menu-open .nav.open {
     animation: wave-bounce 1s ease-in-out infinite alternate;
 }
 
+/* Compact Waveform Desktop vs Mobile */
+.deck-eq-desktop {
+    display: flex;
+}
+
+.deck-eq-mobile {
+    display: none !important;
+}
+
+.deck-mobile-eq-bar {
+    flex: 1;
+    height: 8px;
+    background: color-mix(in srgb, var(--ink) 35%, transparent);
+    border-radius: 1px;
+    transform-origin: center;
+    transform: scaleY(0.25);
+    transition: background .2s, opacity .25s ease;
+    will-change: transform;
+    animation: deckMobileEqLinear 1.2s linear infinite;
+    animation-delay: var(--deck-bar-delay, 0s);
+    animation-play-state: paused;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-user-drag: none;
+    pointer-events: none;
+}
+
+.deck-eq-mobile.active .deck-mobile-eq-bar {
+    background: var(--coral);
+}
+
+.deck-eq-mobile.playing .deck-mobile-eq-bar {
+    animation-play-state: running;
+}
+
+@keyframes deckMobileEqLinear {
+    0% {
+        transform: scaleY(0.25);
+    }
+    50% {
+        transform: scaleY(1.35);
+    }
+    100% {
+        transform: scaleY(0.25);
+    }
+}
+
 /* Timeline & Scrubber */
 .deck-timeline {
     display: flex;
@@ -3656,6 +3703,57 @@ html.mobile-menu-open .nav.open {
     }
 }
 
+/* Studio Waveform Desktop vs Mobile */
+.studio-wave-desktop {
+    display: flex;
+}
+
+.studio-wave-mobile {
+    display: none !important;
+}
+
+.studio-mobile-wave-bar {
+    width: 6.5px;
+    background: #ff6358;
+    border-radius: 3px;
+    transform-origin: center;
+    height: var(--bar-h, 16px);
+    transform: scaleY(0.28);
+    opacity: 0.5;
+    will-change: transform, opacity;
+    animation: studioMobileWaveLinear 1.4s linear infinite;
+    animation-delay: var(--bar-delay, 0s);
+    animation-play-state: paused;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-user-drag: none;
+    pointer-events: none;
+}
+
+.studio-wave-mobile.playing {
+    filter: drop-shadow(0 0 10px rgba(255, 99, 88, 0.45));
+}
+
+.studio-wave-mobile.playing .studio-mobile-wave-bar {
+    animation-play-state: running;
+    opacity: 1;
+}
+
+@keyframes studioMobileWaveLinear {
+    0% {
+        transform: scaleY(0.28);
+        opacity: 0.6;
+    }
+    50% {
+        transform: scaleY(1.32);
+        opacity: 1;
+    }
+    100% {
+        transform: scaleY(0.28);
+        opacity: 0.6;
+    }
+}
+
 /* Timeline Scrubber */
 .studio-scrubber-row {
     display: flex;
@@ -4310,6 +4408,23 @@ html.mobile-menu-open .nav.open {
         margin: 0 0 10px !important;
     }
 
+    .studio-wave-desktop {
+        display: none !important;
+    }
+
+    .studio-wave-mobile {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 4px !important;
+        height: 42px !important;
+        margin: 20px 0 22px !important;
+        overflow: visible !important;
+        max-width: 100% !important;
+        -webkit-user-select: none !important;
+        user-select: none !important;
+    }
+
     .studio-wave-container {
         gap: 4px !important;
         height: 42px !important;
@@ -4318,7 +4433,8 @@ html.mobile-menu-open .nav.open {
         max-width: 100% !important;
     }
 
-    .studio-wave-bar {
+    .studio-wave-bar,
+    .studio-mobile-wave-bar {
         width: 4px !important;
     }
 
