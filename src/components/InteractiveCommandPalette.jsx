@@ -130,7 +130,9 @@ export default function InteractiveCommandPalette({
       id: "music-toggle",
       category: "STUDIO",
       title: musicState?.isPlaying ? "Pause Portfolio Soundtrack" : "Play Portfolio Soundtrack",
-      subtitle: musicState?.isPlaying ? "Pause MeloMance / Tracy Chapman" : "Start studio vinyl deck",
+      subtitle: musicState?.isPlaying
+        ? `Pause ${musicState?.currentTrack?.title || "soundtrack"}`
+        : `Start studio vinyl deck${musicState?.currentTrack?.title ? ` (${musicState.currentTrack.title})` : ""}`,
       action: () => {
         if (!musicState?.isPlaying) {
           musicState?.togglePlay();

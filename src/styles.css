@@ -3241,29 +3241,314 @@ html.mobile-menu-open .nav.open {
     width: 182px;
     height: 182px;
     border-radius: 50%;
-    background: radial-gradient(circle, #222 18%, #111 20%, #1e1e1e 34%, #0f0f0f 42%, #1a1a1a 56%, #0d0d0d 70%, #171717 84%, #0a0a0a 100%);
     border: 1.5px solid var(--ink);
     margin-left: -65px;
     position: relative;
     z-index: 1;
     flex-shrink: 0;
     box-shadow: 2px 2px 0 rgba(17, 17, 17, 0.1);
+    background: #111;
+    overflow: hidden;
+    user-select: none;
+    -webkit-user-select: none;
 }
 
-.studio-vinyl-disc.spinning {
-    animation: vinyl-spin 5.5s linear infinite;
+.studio-vinyl-grooves {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: repeating-radial-gradient(circle,
+            #15121b 0px,
+            #15121b 2px,
+            #262030 3px,
+            #15121b 4px);
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: inset 0 0 16px rgba(0, 0, 0, 0.85);
 }
 
-.studio-vinyl-center-hole {
+.studio-vinyl-disc.spinning .studio-vinyl-grooves {
+    animation: vinyl-spin 2.8s linear infinite;
+}
+
+.studio-vinyl-sheen {
     position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 26px;
-    height: 26px;
+    inset: 0;
+    border-radius: 50%;
+    background: conic-gradient(from 30deg,
+            transparent 0deg,
+            rgba(255, 255, 255, 0.22) 20deg,
+            transparent 45deg,
+            transparent 180deg,
+            rgba(255, 255, 255, 0.18) 200deg,
+            transparent 230deg);
+    pointer-events: none;
+}
+
+.studio-vinyl-label {
+    width: 68px;
+    height: 68px;
+    border-radius: 50%;
+    overflow: hidden;
+    position: relative;
+    border: 1.5px solid rgba(255, 255, 255, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.6);
+}
+
+.studio-vinyl-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    pointer-events: none;
+}
+
+.studio-vinyl-hub {
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--paper);
+    border: 2px solid var(--ink);
+    box-shadow: inset 0 0 3px rgba(0, 0, 0, 0.8);
+    pointer-events: none;
+}
+
+/* ==========================================================================
+   STUDIO TONEARM / STYLUS STICK (Only in Mode 3 Expanded Deck)
+   ========================================================================== */
+
+.studio-tonearm-assembly {
+    position: absolute;
+    top: -16px;
+    right: -26px;
+    width: 86px;
+    height: 220px;
+    z-index: 10;
+    pointer-events: auto;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+/* Resting Cradle / Post */
+.studio-tonearm-cradle {
+    position: absolute;
+    top: 114px;
+    right: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    pointer-events: none;
+}
+
+.cradle-post {
+    width: 6px;
+    height: 18px;
+    background: linear-gradient(to right, #71717a, #e4e4e7, #52525b);
+    border: 1px solid var(--ink);
+    border-radius: 2px;
+}
+
+.cradle-clip {
+    width: 14px;
+    height: 7px;
+    border: 1.5px solid var(--ink);
+    border-top: none;
+    border-radius: 0 0 7px 7px;
+    background: #27272a;
+    box-shadow: 1px 1px 0 rgba(17, 17, 17, 0.2);
+}
+
+/* Pivot Base / Gimbal */
+.studio-tonearm-pivot {
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: grab;
+    z-index: 12;
+}
+
+.pivot-base-outer {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: radial-gradient(circle, #e4e4e7 25%, #a1a1aa 65%, #52525b 100%);
+    border: 1.5px solid var(--ink);
+    box-shadow: 2px 2px 0 var(--ink);
+}
+
+.pivot-base-ring {
+    position: absolute;
+    inset: 5px;
+    border-radius: 50%;
+    border: 1px dashed rgba(17, 17, 17, 0.5);
+    background: #27272a;
+}
+
+.pivot-gimbal {
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #f4f4f5, #71717a);
+    border: 1.2px solid var(--ink);
+}
+
+.pivot-screw {
+    position: absolute;
+    width: 6px;
+    height: 6px;
     border-radius: 50%;
     background: var(--ink);
-    border: 2px solid #333;
+}
+
+/* Rotating Tonearm Wand Wrapper */
+.studio-tonearm-wand-wrap {
+    position: absolute;
+    top: 26px;
+    right: 28px;
+    width: 24px;
+    height: 150px;
+    transform-origin: 12px 0px;
+    cursor: grab;
+    touch-action: none;
+    z-index: 11;
+}
+
+.studio-tonearm-wand-wrap.dragging {
+    cursor: grabbing;
+}
+
+/* Counterweight extending behind the pivot */
+.tonearm-counterweight {
+    position: absolute;
+    top: -26px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    background: linear-gradient(135deg, #e4e4e7 0%, #a1a1aa 50%, #3f3f46 100%);
+    border: 1.5px solid var(--ink);
+    box-shadow: 1.5px 1.5px 0 var(--ink);
+}
+
+/* Slender Tonearm Rod / Stick */
+.tonearm-rod {
+    width: 4.5px;
+    height: 118px;
+    margin: 0 auto;
+    background: linear-gradient(to right, #a1a1aa 0%, #ffffff 45%, #71717a 85%, #3f3f46 100%);
+    border: 1.2px solid var(--ink);
+    border-radius: 2px;
+    position: relative;
+    box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.25);
+}
+
+.tonearm-rod-highlight {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 1px;
+    width: 1px;
+    background: rgba(255, 255, 255, 0.85);
+}
+
+/* Headshell & Cartridge */
+.tonearm-headshell {
+    position: absolute;
+    bottom: -6px;
+    left: 50%;
+    transform: translateX(-50%) rotate(22deg);
+    transform-origin: top center;
+    width: 20px;
+    height: 28px;
+}
+
+.tonearm-finger-lift {
+    position: absolute;
+    top: 2px;
+    right: -8px;
+    width: 10px;
+    height: 14px;
+    border-right: 2px solid var(--ink);
+    border-top: 2px solid var(--ink);
+    border-radius: 0 6px 0 0;
+    cursor: grab;
+    transition: transform 0.15s ease;
+}
+
+.studio-tonearm-wand-wrap:hover .tonearm-finger-lift {
+    transform: scale(1.15);
+}
+
+.tonearm-cartridge {
+    width: 16px;
+    height: 24px;
+    background: #18181b;
+    border: 1.5px solid var(--ink);
+    border-radius: 3px 3px 5px 5px;
+    box-shadow: 1.5px 1.5px 0 var(--ink);
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.cartridge-badge {
+    width: 8px;
+    height: 6px;
+    border-radius: 1px;
+    background: var(--coral);
+    border: 1px solid var(--ink);
+}
+
+.tonearm-needle-tip {
+    width: 4px;
+    height: 5px;
+    background: #f43f5e;
+    margin: -1px auto 0;
+    clip-path: polygon(50% 100%, 0 0, 100% 0);
+    filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.5));
+}
+
+/* Subtle Interactive Hint Pill */
+.studio-tonearm-hint-pill {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    white-space: nowrap;
+    background: #fff;
+    border: 1.2px solid var(--ink);
+    border-radius: 999px;
+    padding: 3px 10px;
+    font: 700 8.5px "DM Mono", monospace;
+    letter-spacing: 0.6px;
+    color: var(--ink);
+    box-shadow: 1.5px 1.5px 0 var(--ink);
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.studio-tonearm-hint-pill:hover {
+    background: var(--lime);
+    transform: translateX(-50%) translate(0.5px, 0.5px);
+    box-shadow: 1px 1px 0 var(--ink);
+}
+
+.studio-tonearm-hint-pill.active {
+    background: color-mix(in srgb, var(--coral) 18%, #fff);
 }
 
 .studio-track-info-col {
@@ -3922,7 +4207,7 @@ html.mobile-menu-open .nav.open {
 
     /* Responsive vinyl sizing */
     .studio-vinyl-assembly {
-        margin-right: 28px !important;
+        margin-right: 48px !important;
     }
 
     .studio-sleeve {
@@ -3937,9 +4222,16 @@ html.mobile-menu-open .nav.open {
         margin-left: -52px !important;
     }
 
-    .studio-vinyl-center-hole {
-        width: 20px !important;
-        height: 20px !important;
+    .studio-vinyl-label {
+        width: 54px !important;
+        height: 54px !important;
+    }
+
+    .studio-tonearm-assembly {
+        transform: scale(0.82) !important;
+        transform-origin: top right !important;
+        right: -20px !important;
+        top: -12px !important;
     }
 
     .studio-track-info-col {

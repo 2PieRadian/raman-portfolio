@@ -22,60 +22,43 @@ import {
 import { extractAudioMetadata, detectFormatFromNameOrType, createFallbackCover } from "../utils/audioMetadata";
 import { sfx } from "../utils/sfx";
 import { getLenis } from "./SmoothScroll";
+import folderTracks from "virtual:soundtracks";
 
-// Curated metadata dictionary for tracks in public/music
-const CURATED_METADATA = {
-  "melomance-love-maybe.flac": {
-    id: "melomance-love-maybe",
-    title: "Love, Maybe",
-    artist: "MeloMance",
-    album: "LOVE, MAYBE (A BUSINESS PROPOSAL OST SP.. 2022",
-    date: "2022",
-    audioSrc: "/music/melomance-love-maybe.flac",
-    fallbackCover: "/covers/melomance-love-maybe.jpg",
-    coverUrl: "/covers/melomance-love-maybe.jpg",
-    accent: "lime",
-    format: "FLAC 24-BIT",
-  },
-  "tracy-chapman-fast-car.flac": {
-    id: "tracy-chapman-fast-car",
-    title: "Fast Car (2015 Remaster)",
-    artist: "Tracy Chapman",
-    album: "TRACY CHAPMAN (ELEKTRA RECORDS) · 1988",
-    date: "2015",
-    audioSrc: "/music/tracy-chapman-fast-car.flac",
-    fallbackCover: "/covers/tracy-chapman-fast-car.jpg",
-    coverUrl: "/covers/tracy-chapman-fast-car.jpg",
-    accent: "coral",
-    format: "FLAC 16-BIT",
-  },
-  "Finding Solace.wav": {
-    id: "finding-solace",
-    title: "Finding Solace",
-    artist: "Solace",
-    album: "FINDING SOLACE (ORIGINAL SOUNDTRACK)",
-    date: "2026",
-    audioSrc: "/music/Finding Solace.wav",
-    fallbackCover: createFallbackCover("Finding Solace", "Solace", "WAV"),
-    coverUrl: createFallbackCover("Finding Solace", "Solace", "WAV"),
-    accent: "lilac",
-    format: "WAV 16-BIT",
-  },
-  "Turning Pages.wav": {
-    id: "turning-pages",
-    title: "Turning Pages",
-    artist: "Sleeping At Last",
-    album: "TURNING PAGES (SOUNDTRACK)",
-    date: "2026",
-    audioSrc: "/music/Turning Pages.wav",
-    fallbackCover: createFallbackCover("Turning Pages", "Sleeping At Last", "WAV"),
-    coverUrl: createFallbackCover("Turning Pages", "Sleeping At Last", "WAV"),
-    accent: "lime",
-    format: "WAV 16-BIT",
-  },
+const EMPTY_TRACK = {
+  id: "empty",
+  title: "No Tracks Found",
+  artist: "Place audio files into public/music/",
+  album: "MUSIC LIBRARY",
+  date: "2026",
+  audioSrc: "",
+  fallbackCover: createFallbackCover("No Tracks", "Folder Empty", "AUDIO"),
+  coverUrl: createFallbackCover("No Tracks", "Folder Empty", "AUDIO"),
+  accent: "lime",
+  format: "AUDIO",
 };
 
-const DEFAULT_TRACKS = Object.values(CURATED_METADATA);
+function normalizeFolderTrack(t, idx) {
+  const title = t.title || `Track 0${idx + 1}`;
+  const artist = t.artist || "Original Soundtrack";
+  const format = t.format || "AUDIO";
+  const fallbackCover = t.coverUrl || t.fallbackCover || createFallbackCover(title, artist, format);
+  return {
+    id: t.id || `track-${idx + 1}`,
+    title,
+    artist,
+    album: t.album || `${title.toUpperCase()} · SOUNDTRACK`,
+    date: t.date || "2026",
+    audioSrc: t.audioSrc,
+    fallbackCover,
+    coverUrl: fallbackCover,
+    accent: t.accent || "lime",
+    format,
+  };
+}
+
+const DEFAULT_TRACKS = Array.isArray(folderTracks) && folderTracks.length > 0
+  ? folderTracks.map(normalizeFolderTrack)
+  : [];
 
 const WAVE_BARS = [
   6, 8, 12, 10, 14, 18, 22, 26, 28, 32, 29, 34, 30, 26, 24, 22,
@@ -115,7 +98,103 @@ export default function MusicPlayer({ isDeckOpen, setIsDeckOpen, onPlayingStateC
   const compactFileInputRef = useRef(null);
   const dockRef = useRef(null);
   const isTransitioningRef = useRef(false);
-  const currentTrack = tracks[currentIndex] || tracks[0];
+  const currentTrack = tracks[currentIndex] || tracks[0] || EMPTY_TRACK;
+
+  // Tonearm state & drag interaction (Mode 3: Expanded Studio Deck only)
+  const [isDraggingTonearm, setIsDraggingTonearm] = useState(false);
+  const [tonearmDragAngle, setTonearmDragAngle] = useState(null);
+  const tonearmPivotRef = useRef(null);
+  const tonearmDragStartRef = useRef({ pivotCenterX: 0, pivotCenterY: 0, startPointerAngle: 0, startArmAngle: 0, moved: false });
+
+  const TONEARM_REST_ANGLE = 0;   // resting off the disc
+  const TONEARM_PLAY_ANGLE = 32;  // resting on the revolving vinyl disc
+
+  const currentTonearmAngle = isDraggingTonearm && tonearmDragAngle !== null
+    ? tonearmDragAngle
+    : isPlaying
+      ? TONEARM_PLAY_ANGLE
+      : TONEARM_REST_ANGLE;
+
+  const handleTonearmPointerDown = (e) => {
+    if (!isFullScreen) return;
+    e.preventDefault();
+    e.stopPropagation();
+
+    const pivotEl = tonearmPivotRef.current;
+    if (!pivotEl) return;
+
+    const pivotRect = pivotEl.getBoundingClientRect();
+    const pivotCenterX = pivotRect.left + pivotRect.width / 2;
+    const pivotCenterY = pivotRect.top + pivotRect.height / 2;
+
+    const pointerAngle = Math.atan2(e.clientY - pivotCenterY, e.clientX - pivotCenterX) * (180 / Math.PI);
+
+    tonearmDragStartRef.current = {
+      pivotCenterX,
+      pivotCenterY,
+      startPointerAngle: pointerAngle,
+      startArmAngle: isPlaying ? TONEARM_PLAY_ANGLE : TONEARM_REST_ANGLE,
+      moved: false,
+    };
+
+    setIsDraggingTonearm(true);
+    setTonearmDragAngle(isPlaying ? TONEARM_PLAY_ANGLE : TONEARM_REST_ANGLE);
+  };
+
+  useEffect(() => {
+    if (!isDraggingTonearm) return;
+
+    const onPointerMove = (e) => {
+      const { pivotCenterX, pivotCenterY, startPointerAngle, startArmAngle } = tonearmDragStartRef.current;
+      tonearmDragStartRef.current.moved = true;
+
+      const currentPointerAngle = Math.atan2(e.clientY - pivotCenterY, e.clientX - pivotCenterX) * (180 / Math.PI);
+      const angleDelta = currentPointerAngle - startPointerAngle;
+
+      let newAngle = startArmAngle + angleDelta;
+      newAngle = Math.max(-10, Math.min(48, newAngle));
+
+      setTonearmDragAngle(newAngle);
+    };
+
+    const onPointerUp = () => {
+      const { moved } = tonearmDragStartRef.current;
+      setIsDraggingTonearm(false);
+
+      if (!moved) {
+        togglePlay();
+        setTonearmDragAngle(null);
+        return;
+      }
+
+      const midPoint = (TONEARM_REST_ANGLE + TONEARM_PLAY_ANGLE) / 2;
+      const finalAngle = tonearmDragAngle ?? (isPlaying ? TONEARM_PLAY_ANGLE : TONEARM_REST_ANGLE);
+
+      if (finalAngle >= midPoint) {
+        if (!isPlaying) {
+          sfx.playPop();
+          togglePlay();
+        }
+      } else {
+        if (isPlaying) {
+          sfx.playSnap();
+          togglePlay();
+        }
+      }
+
+      setTonearmDragAngle(null);
+    };
+
+    window.addEventListener("pointermove", onPointerMove);
+    window.addEventListener("pointerup", onPointerUp);
+    window.addEventListener("pointercancel", onPointerUp);
+
+    return () => {
+      window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("pointerup", onPointerUp);
+      window.removeEventListener("pointercancel", onPointerUp);
+    };
+  }, [isDraggingTonearm, tonearmDragAngle, isPlaying, isFullScreen]);
 
   const toggleShuffle = () => {
     setIsShuffle(!isShuffle);
@@ -214,33 +293,67 @@ export default function MusicPlayer({ isDeckOpen, setIsDeckOpen, onPlayingStateC
     }
   }, [volume, isMuted]);
 
-  // Extract embedded cover art and metadata directly from the audio files on mount
+  // Read tracks from public/music folder dynamically and extract embedded audio tags & artwork
   useEffect(() => {
-    tracks.forEach((track, idx) => {
-      extractAudioMetadata(track.audioSrc, track.fallbackCover).then((meta) => {
-        if (meta) {
-          setTracks((prev) =>
-            prev.map((t, i) =>
-              i === idx
-                ? {
-                  ...t,
-                  coverUrl: meta.coverUrl || t.coverUrl,
-                  title: meta.title?.trim() || t.title,
-                  artist: meta.artist?.trim() || t.artist,
-                  album: meta.album?.trim() || t.album,
-                  format: meta.format || t.format,
-                }
-                : t
-            )
-          );
+    let isMounted = true;
+
+    const syncTracksAndMetadata = async () => {
+      let activeList = tracks.length > 0 ? tracks : DEFAULT_TRACKS;
+
+      try {
+        const res = await fetch("/music/tracks.json", { cache: "no-store" });
+        if (res.ok) {
+          const json = await res.json();
+          if (Array.isArray(json) && json.length > 0) {
+            activeList = json.map(normalizeFolderTrack);
+            if (isMounted) {
+              setTracks(activeList);
+            }
+          }
+        }
+      } catch (e) {
+        // Fallback to bundled virtual:soundtracks
+      }
+
+      if (!isMounted) return;
+
+      activeList.forEach(async (track, idx) => {
+        if (!track?.audioSrc) return;
+        try {
+          const meta = await extractAudioMetadata(track.audioSrc, track.fallbackCover);
+          if (meta && isMounted) {
+            setTracks((prev) =>
+              prev.map((t, i) =>
+                i === idx
+                  ? {
+                      ...t,
+                      coverUrl: meta.coverUrl || t.coverUrl,
+                      title: meta.title?.trim() || t.title,
+                      artist: meta.artist?.trim() || t.artist,
+                      album: meta.album?.trim() || t.album,
+                      date: meta.date?.trim() || t.date,
+                      format: meta.format || t.format,
+                    }
+                  : t
+              )
+            );
+          }
+        } catch (err) {
+          console.warn("Could not extract embedded metadata for:", track.audioSrc, err);
         }
       });
-    });
+    };
+
+    syncTracksAndMetadata();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const playTrackWithList = (index, trackList = tracks, shouldPlay = true) => {
     const nextTrack = trackList[index];
-    if (!nextTrack || !audioRef.current) return;
+    if (!nextTrack || !nextTrack.audioSrc || !audioRef.current) return;
 
     setCurrentIndex(index);
     setCurrentTime(0);
@@ -296,6 +409,7 @@ export default function MusicPlayer({ isDeckOpen, setIsDeckOpen, onPlayingStateC
   const togglePlay = () => {
     const audio = audioRef.current;
     if (!audio) return;
+    if (!currentTrack || !currentTrack.audioSrc) return;
 
     sfx.playSnap();
 
@@ -1002,7 +1116,68 @@ export default function MusicPlayer({ isDeckOpen, setIsDeckOpen, onPlayingStateC
                       </div>
 
                       <div className={`studio-vinyl-disc ${isPlaying ? "spinning" : ""}`}>
-                        <div className="studio-vinyl-center-hole" />
+                        <div className="studio-vinyl-grooves">
+                          <div className="studio-vinyl-sheen" />
+                          <div className="studio-vinyl-label">
+                            <img
+                              src={currentTrack.coverUrl}
+                              alt={currentTrack.title}
+                              draggable={false}
+                              className="studio-vinyl-img"
+                            />
+                            <div className="studio-vinyl-hub" />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* TONEARM ASSEMBLY (Only in Mode 3 Expanded Studio Deck) */}
+                      <div className="studio-tonearm-assembly" data-lenis-prevent="true">
+                        {/* Resting post cradle */}
+                        <div className="studio-tonearm-cradle">
+                          <div className="cradle-post" />
+                          <div className="cradle-clip" />
+                        </div>
+
+                        {/* Pivot gimbal */}
+                        <div ref={tonearmPivotRef} className="studio-tonearm-pivot">
+                          <div className="pivot-base-outer" />
+                          <div className="pivot-base-ring" />
+                          <div className="pivot-gimbal" />
+                          <div className="pivot-screw" />
+                        </div>
+
+                        {/* Rotating Tonearm Wand + Headshell + Needle Tip */}
+                        <div
+                          className={`studio-tonearm-wand-wrap ${isPlaying ? "on-disc" : "at-rest"} ${isDraggingTonearm ? "dragging" : ""}`}
+                          style={{
+                            transform: `rotate(${currentTonearmAngle}deg)`,
+                            transition: isDraggingTonearm ? "none" : "transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
+                          }}
+                          onPointerDown={handleTonearmPointerDown}
+                          role="button"
+                          tabIndex={0}
+                          title={isPlaying ? "Tonearm plugged in (Playing) - Drag or click to unplug and pause" : "Tonearm unplugged (Paused) - Drag or click to plug into disc and play"}
+                          aria-label={isPlaying ? "Tonearm on vinyl (Playing). Drag or tap to unplug and pause." : "Tonearm off vinyl (Paused). Drag or tap to place on disc and play."}
+                        >
+                          {/* Counterweight */}
+                          <div className="tonearm-counterweight" />
+
+                          {/* Slender Rod / Stick */}
+                          <div className="tonearm-rod">
+                            <div className="tonearm-rod-highlight" />
+                          </div>
+
+                          {/* Headshell / Stylus Cartridge */}
+                          <div className="tonearm-headshell">
+                            {/* Finger lift hook handle */}
+                            <div className="tonearm-finger-lift" />
+                            <div className="tonearm-cartridge">
+                              <span className="cartridge-badge" />
+                            </div>
+                            {/* Needle / Stylus tip touching grooves */}
+                            <div className="tonearm-needle-tip" />
+                          </div>
+                        </div>
                       </div>
                     </div>
 
