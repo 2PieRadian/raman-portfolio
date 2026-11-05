@@ -879,29 +879,8 @@ export default function MusicPlayer({ isDeckOpen, setIsDeckOpen, onPlayingStateC
             <div className="studio-stage-body">
               {/* Left & Center Main Area */}
               <div className="studio-stage-left-center" data-lenis-prevent="true">
-                {/* Upper Hero Row: "Now Playing." + Vinyl + Track Info */}
+                {/* Upper Hero Row: Vinyl + Track Info */}
                 <div className="studio-hero-row">
-                  {/* Left Column: Now Playing Headline */}
-                  <div className="now-playing-heading-wrap">
-                    <h1 className="now-playing-title">
-                      Now<br />
-                      <span className="now-playing-dot">Playing.</span>
-                    </h1>
-                    <svg
-                      className="now-playing-squiggle"
-                      viewBox="0 0 110 24"
-                      fill="none"
-                      aria-hidden="true"
-                    >
-                      <path
-                        d="M6 15 C 28 22, 48 5, 74 13 C 90 18, 98 12, 104 13"
-                        stroke="#111"
-                        strokeWidth="2.8"
-                        strokeLinecap="round"
-                      />
-                    </svg>
-                  </div>
-
                   {/* Vinyl Assembly + Track Details Group */}
                   <div className="studio-hero-track-group">
                     {/* Vinyl Sleeve & Sliding Record */}

@@ -2985,42 +2985,17 @@ html.mobile-menu-open .nav.open {
 .studio-hero-row {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 36px;
     margin-bottom: 20px;
+    width: 100%;
 }
 
-.now-playing-heading-wrap {
-    flex-shrink: 0;
-    position: relative;
-    padding-bottom: 8px;
-}
-
-.now-playing-title {
-    font: 900 clamp(42px, 5vw, 68px)/0.95 "Manrope", sans-serif;
-    letter-spacing: -0.04em;
-    color: var(--ink);
-    margin: 0;
-}
-
-.now-playing-title .now-playing-dot {
-    position: relative;
-    display: inline-block;
-    text-shadow: 3px 4px 0 #d8b4fe;
-}
-
-.now-playing-squiggle {
-    width: 105px;
-    height: 22px;
-    display: block;
-    margin-top: 6px;
-    color: var(--ink);
-}
-
-/* Center Upper: Vinyl & Track Metadata */
 .studio-hero-track-group {
     display: flex;
     align-items: center;
-    gap: 28px;
+    justify-content: center;
+    gap: 32px;
     flex: 1;
     min-width: 0;
 }
